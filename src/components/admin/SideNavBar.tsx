@@ -6,60 +6,83 @@ import { usePathname } from 'next/navigation';
 export default function SideNavBar() {
   const pathname = usePathname();
 
-  const getLinkClasses = (path: string) => {
-    const isActive = pathname === path || (path === '/admin/events' && pathname === '/admin');
-    const baseClasses = "flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 ease-in-out font-body text-sm font-medium";
-    
-    if (isActive) {
-      return `${baseClasses} bg-[#171f33] text-[#4edea3] border-r-4 border-[#4edea3] font-semibold`;
-    }
-    return `${baseClasses} text-[#bcc7de]/60 hover:bg-[#171f33] hover:text-[#bcc7de]`;
-  };
+  const isActive = (path: string) =>
+    pathname === path || (path === '/admin/events' && pathname === '/admin');
 
   return (
-    <nav className="fixed left-0 top-0 h-full w-64 z-40 bg-[#0b1326] flex flex-col py-20 px-4 transition-all duration-300 ease-in-out hidden md:flex border-r border-outline-variant/20">
-      <div className="mb-10 px-4">
-        <h1 className="font-headline font-bold text-[#bcc7de] text-2xl tracking-tighter">The Sentinel Lens</h1>
-        <p className="text-xs text-[#bcc7de]/60 mt-1 uppercase tracking-widest">Venue Operations</p>
-      </div>
-      
-      <button className="bg-primary text-on-primary rounded-xl py-3 px-4 mb-8 flex items-center justify-center gap-2 hover:bg-primary-fixed transition-colors font-medium text-sm">
-        <span className="material-symbols-outlined text-lg" data-icon="add" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
-        New Event
-      </button>
-
-      <div className="flex-1 flex flex-col gap-2">
-        <Link href="/admin/events" className={getLinkClasses('/admin/events')}>
-          <span className="material-symbols-outlined" data-icon="calendar_today">calendar_today</span>
-          <span>Events</span>
-        </Link>
-        <Link href="/admin/venue-builder" className={getLinkClasses('/admin/venue-builder')}>
-          <span className="material-symbols-outlined" data-icon="architecture">architecture</span>
-          <span>Layout Builder</span>
-        </Link>
-        <Link href="/admin/tickets" className={getLinkClasses('/admin/tickets')}>
-          <span className="material-symbols-outlined" data-icon="confirmation_number">confirmation_number</span>
-          <span>Tickets</span>
-        </Link>
-        <Link href="/admin/monitor" className={getLinkClasses('/admin/monitor')}>
-          <span className="material-symbols-outlined" data-icon="sensors">sensors</span>
-          <span>Monitoring</span>
-        </Link>
-        <Link href="/admin/alerts" className={getLinkClasses('/admin/alerts')}>
-          <span className="material-symbols-outlined" data-icon="emergency_home">emergency_home</span>
-          <span>Alerts</span>
-        </Link>
+    <nav
+      className="
+        group/nav
+        h-screen shrink-0 z-40
+        bg-[#0b1326] border-r border-outline-variant/20
+        flex flex-col
+        w-16 hover:w-64
+        transition-[width] duration-300 ease-in-out
+        overflow-hidden
+        hidden md:flex
+        sticky top-0
+      "
+    >
+      {/* Logo — same height as TopNavBar (h-16) */}
+      <div className="h-16 flex items-center px-4 shrink-0 border-b border-outline-variant/20">
+        <span className="material-symbols-outlined text-[#4edea3] shrink-0 text-2xl">hub</span>
+        <div className="ml-3 opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+          <p className="font-headline font-bold text-[#bcc7de] text-base tracking-tighter leading-tight">The Sentinel Lens</p>
+          <p className="text-[0.6rem] text-[#bcc7de]/60 uppercase tracking-widest">Venue Operations</p>
+        </div>
       </div>
 
-      <div className="mt-auto flex flex-col gap-2 pt-6 border-t border-outline-variant/20">
-        <Link href="#" className="flex items-center gap-3 px-4 py-2 rounded-lg text-[#bcc7de]/60 hover:bg-[#171f33] hover:text-[#bcc7de] transition-all duration-300 ease-in-out font-body text-sm font-medium">
-          <span className="material-symbols-outlined text-sm" data-icon="history_edu">history_edu</span>
-          <span>Logs</span>
-        </Link>
-        <Link href="#" className="flex items-center gap-3 px-4 py-2 rounded-lg text-[#bcc7de]/60 hover:bg-[#171f33] hover:text-[#bcc7de] transition-all duration-300 ease-in-out font-body text-sm font-medium">
-          <span className="material-symbols-outlined text-sm" data-icon="dns">dns</span>
-          <span>System Status</span>
-        </Link>
+      {/* New Event button */}
+      <div className="px-2 py-4 shrink-0">
+        <button className="bg-primary text-on-primary rounded-xl flex items-center justify-center gap-2 w-full py-2.5 px-2 hover:bg-primary-fixed transition-colors font-medium text-sm">
+          <span className="material-symbols-outlined text-lg shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
+          <span className="opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200 whitespace-nowrap">New Event</span>
+        </button>
+      </div>
+
+      {/* Nav links */}
+      <div className="flex-1 flex flex-col gap-1 px-2 overflow-hidden">
+        {[
+          { href: '/admin/events', icon: 'calendar_today', label: 'Events' },
+          { href: '/admin/venue-builder', icon: 'architecture', label: 'Layout Builder' },
+          { href: '/admin/tickets', icon: 'confirmation_number', label: 'Tickets' },
+          { href: '/admin/monitor', icon: 'sensors', label: 'Monitoring' },
+          { href: '/admin/alerts', icon: 'emergency_home', label: 'Alerts' },
+        ].map(({ href, icon, label }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`
+              flex items-center gap-3 py-3 px-2 rounded-lg
+              transition-all duration-200 font-body text-sm font-medium
+              whitespace-nowrap
+              ${isActive(href)
+                ? 'bg-[#171f33] text-[#4edea3] border-r-4 border-[#4edea3] font-semibold'
+                : 'text-[#bcc7de]/60 hover:bg-[#171f33] hover:text-[#bcc7de]'
+              }
+            `}
+          >
+            <span className="material-symbols-outlined shrink-0">{icon}</span>
+            <span className="opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200">{label}</span>
+          </Link>
+        ))}
+      </div>
+
+      {/* Bottom links */}
+      <div className="mt-auto flex flex-col gap-1 px-2 pt-4 pb-4 border-t border-outline-variant/20 shrink-0">
+        {[
+          { href: '#', icon: 'history_edu', label: 'Logs' },
+          { href: '#', icon: 'dns', label: 'System Status' },
+        ].map(({ href, icon, label }) => (
+          <Link
+            key={label}
+            href={href}
+            className="flex items-center gap-3 py-2.5 px-2 rounded-lg text-[#bcc7de]/60 hover:bg-[#171f33] hover:text-[#bcc7de] transition-all duration-200 font-body text-sm font-medium whitespace-nowrap"
+          >
+            <span className="material-symbols-outlined text-sm shrink-0">{icon}</span>
+            <span className="opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200">{label}</span>
+          </Link>
+        ))}
       </div>
     </nav>
   );
