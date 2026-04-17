@@ -32,14 +32,6 @@ export default function SideNavBar() {
         </div>
       </div>
 
-      {/* New Event button */}
-      <div className="px-2 py-4 shrink-0">
-        <button className="bg-primary text-on-primary rounded-xl flex items-center justify-center gap-2 w-full py-2.5 px-2 hover:bg-primary-fixed transition-colors font-medium text-sm">
-          <span className="material-symbols-outlined text-lg shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>add</span>
-          <span className="opacity-0 group-hover/nav:opacity-100 transition-opacity duration-200 whitespace-nowrap">New Event</span>
-        </button>
-      </div>
-
       {/* Nav links */}
       <div className="flex-1 flex flex-col gap-1 px-2 overflow-hidden">
         {[

@@ -11,7 +11,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Right side: header + scrollable content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <TopNavBar />
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto min-h-0">
           {children}
         </main>
       </div>
