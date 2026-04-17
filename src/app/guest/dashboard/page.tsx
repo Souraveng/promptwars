@@ -1,9 +1,11 @@
 'use client';
 import React from 'react';
+import { useRouter } from 'next/navigation';
 import { mockData } from '@/lib/mock-data';
 
 export default function GuestDashboardPage() {
   const { user, currentEvent, crowd } = mockData;
+  const router = useRouter();
 
   return (
     <main className="px-4 py-6 max-w-md mx-auto space-y-6">
@@ -13,7 +15,10 @@ export default function GuestDashboardPage() {
           <p className="font-label text-[10px] uppercase tracking-[0.05em] text-primary mb-1">Welcome Back</p>
           <h2 className="font-headline text-3xl font-bold">{user.firstName} {user.lastName}</h2>
         </div>
-        <button className="bg-error-container text-on-error-container px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-[0.05em] font-bold flex items-center gap-2 border border-error/20 hover:bg-error/80 transition-colors">
+        <button 
+          onClick={() => router.push('/guest/sos')}
+          className="bg-error-container text-on-error-container px-4 py-2 rounded-full font-label text-[10px] uppercase tracking-[0.05em] font-bold flex items-center gap-2 border border-error/20 hover:bg-error/80 transition-colors"
+        >
           <span className="material-symbols-outlined text-sm" data-icon="emergency" style={{ fontVariationSettings: "'FILL' 1" }}>emergency</span>
           SOS
         </button>

@@ -39,11 +39,14 @@ export default function GuestLayout({ children }: { children: React.ReactNode })
     );
   }
 
+  const tacticalRoutes = ['/guest/sos', '/guest/medical', '/guest/security', '/guest/spill', '/guest/staff'];
+  const isTactical = tacticalRoutes.includes(pathname);
+
   return (
-    <div className="min-h-screen pt-16 pb-24 selection:bg-primary-container selection:text-primary">
-      <TopAppBar />
+    <div className={`min-h-screen selection:bg-primary-container selection:text-primary ${isTactical ? "" : "pt-16 pb-24"}`}>
+      {!isTactical && <TopAppBar />}
       {children}
-      <BottomNavBar />
+      {!isTactical && <BottomNavBar />}
     </div>
   );
 }

@@ -1,122 +1,178 @@
+'use client';
+
 import React from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function GuestMedicalPage() {
+  const router = useRouter();
+  const [isTriggered, setIsTriggered] = React.useState(false);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+
+  const handleTrigger = () => {
+    if (selectedIds.length === 0) return;
+    setIsTriggered(true);
+    // Vibrate device if supported
+    if (typeof window !== 'undefined' && window.navigator.vibrate) {
+      window.navigator.vibrate([200, 100, 200]);
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    if (isTriggered) return;
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const categories = [
+    {
+      id: 'allergic',
+      title: 'Allergic Reaction',
+      desc: 'Anaphylaxis protocol activation. Monitor airway patency and administer epinephrine if available.',
+      icon: 'vaccines',
+      priority: 'PRIORITY_02',
+      color: 'primary',
+      colSpan: 'md:col-span-2'
+    },
+    {
+      id: 'injury',
+      title: 'Severe Injury',
+      desc: 'Trauma baseline. Apply direct pressure to wound site. Elevate limb if appropriate.',
+      icon: 'emergency',
+      priority: 'URGENT',
+      color: 'tertiary',
+      colSpan: 'md:col-span-1'
+    },
+    {
+      id: 'cardiac',
+      title: 'Chest Pain',
+      desc: 'Cardiac distress detected. Position patient in comfortable seated stance. No physical exertion.',
+      icon: 'monitor_heart',
+      priority: 'PRIORITY_01',
+      color: 'primary',
+      colSpan: 'md:col-span-1'
+    },
+    {
+      id: 'general',
+      title: 'General First Aid',
+      desc: 'Minor lacerations, heat exhaustion, or general discomfort. Dispatch initiated.',
+      icon: 'medical_services',
+      priority: 'STANDARD',
+      color: 'secondary',
+      colSpan: 'md:col-span-2'
+    }
+  ];
+
   return (
-    <main className="px-6 max-w-5xl mx-auto space-y-8 pt-8">
-      {/* Hero Section / Status Telemetry */}
-      <section className="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
-        <div className="md:col-span-8">
-          <h1 className="font-headline text-5xl font-bold tracking-tighter mb-2">Triage Protocol</h1>
-          <p className="text-on-surface-variant font-label text-sm uppercase tracking-[0.2em]">System Status: Operational / Active Deployment</p>
+    <div className="bg-surface font-body text-on-surface selection:bg-primary-container min-h-screen w-full flex flex-col relative overflow-x-hidden">
+      {/* Top Tactical Header */}
+      <header className="fixed top-0 w-full z-50 bg-[#0B1326]/60 backdrop-blur-md flex justify-between items-center h-16 px-6 shadow-[0_1px_0_0_rgba(219,226,253,0.05)]">
+        <div className="flex items-center gap-3">
+          <span className={`material-symbols-outlined ${isTriggered ? 'text-tertiary animate-pulse' : 'text-primary'}`} data-icon="medical_services">medical_services</span>
+          <span className="text-sm font-bold tracking-[0.2em] text-[#DBE2FD] font-headline uppercase">
+            {isTriggered ? 'Emergency Activated' : 'Medical Triage'}
+          </span>
         </div>
-        
-        <div className="md:col-span-4 bg-surface-container-low p-4 relative overflow-hidden flex justify-between items-center">
-          <div className="absolute left-0 -top-[100px] w-full h-[100px] bg-gradient-to-b from-transparent via-[rgba(194,198,214,0.05)] to-transparent pointer-events-none animate-[scan_8s_linear_infinite]"></div>
-          <div>
-            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Vitals Proxy</p>
-            <p className="font-headline text-2xl font-bold text-secondary">NOMINAL</p>
-          </div>
-          <div className="text-right">
-            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">Response Time</p>
-            <p className="font-headline text-2xl font-bold text-primary">02:45 <span className="text-xs">MIN</span></p>
-          </div>
-        </div>
-      </section>
+        <div className="font-headline uppercase tracking-widest text-xs text-[#DBE2FD]/60">SENTINEL LENS</div>
+      </header>
 
-      {/* Location Card */}
-      <section className="bg-surface-container-low p-8 relative overflow-hidden rounded-lg group">
-        <div className="absolute top-0 right-0 p-4">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-secondary shadow-[0_0_15px_#4edea3]"></div>
-            <span className="text-[10px] font-label uppercase tracking-widest text-secondary">Live GPS Lock</span>
+      <main className="flex-1 flex flex-col pt-20 pb-24 px-6 relative overflow-y-auto scroll-smooth">
+        {/* Telemetry Grid */}
+        <section className="grid grid-cols-2 gap-4 mb-6">
+          <div className="glass-card p-4 rounded-xl border border-white/5">
+            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">SYSTEM STATUS</p>
+            <p className={`font-headline text-2xl font-bold ${isTriggered ? 'text-tertiary shadow-[0_0_10px_rgba(244,63,94,0.5)]' : 'text-secondary'}`}>
+              {isTriggered ? 'ALERT SENT' : 'NOMINAL'}
+            </p>
           </div>
-        </div>
+          <div className="glass-card p-4 rounded-xl border border-white/5 text-right">
+            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">EST. RESPONSE</p>
+            <p className="font-headline text-2xl font-bold text-primary">{isTriggered ? 'EN ROUTE' : '02:45 MIN'}</p>
+          </div>
+        </section>
 
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-          <div>
-            <label className="font-label text-[10px] uppercase tracking-[0.3em] text-on-surface-variant block mb-2">Designated Venue Sector</label>
-            <h2 className="font-headline text-4xl font-bold tracking-tight text-on-surface">Section 114, Row G</h2>
-          </div>
-          <div className="w-full md:w-48 h-24 bg-surface-container-highest rounded-sm relative overflow-hidden border border-outline-variant/10">
-            <img className="w-full h-full object-cover mix-blend-luminosity opacity-40" alt="simplified dark tactical vector map of a stadium seating section with a single bright emerald location dot highlighting section 114" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHDos3GaIGbldnn7E0IPktLlBwmWNVIVAmYV-HhCQT6EhEh3jn0uX6EF58jzLzWofLv-MCmY1ymRKqpCJxh2KkUD0uTktbyvcfNoHFxH7cM0LchW132HHTLFfwhBa34G5AbDkvinS4K4bygPmxAThhqekuDXpK3gu8IW0LeLiYT8O5vuL_Jv55uxpstqo6DmCXYDQKsjMUSUMcnkncHUTVFAXFiZqZBbWg4hX8EkYprA62luXnt7K2EoOfcspegTfToeePTG5j5clX"/>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="material-symbols-outlined text-secondary text-3xl" data-icon="location_on" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
+        {/* Location Lock */}
+        <section className="glass-card p-6 rounded-2xl mb-6 relative overflow-hidden border border-white/5">
+          <div className="absolute top-0 right-0 p-4">
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isTriggered ? 'bg-tertiary animate-ping shadow-[0_0_15px_#f43f5e]' : 'bg-secondary animate-pulse shadow-[0_0_10px_#4edea3]'}`}></div>
+              <span className={`text-[10px] font-label uppercase tracking-widest ${isTriggered ? 'text-tertiary' : 'text-secondary'}`}>
+                {isTriggered ? 'Live Beacon Active' : 'GPS Lock'}
+              </span>
             </div>
           </div>
-        </div>
-      </section>
+          <label className="font-label text-[10px] uppercase tracking-[0.3em] text-on-surface-variant block mb-1">Current Sector</label>
+          <h2 className="font-headline text-3xl font-bold tracking-tight text-on-surface">Section 114, Row G</h2>
+        </section>
 
-      {/* Option Grid (Bento Style) */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Allergic Reaction (Hero Card) */}
-        <div className="md:col-span-2 bg-[#222a3e]/60 backdrop-blur-xl p-6 min-h-[220px] relative overflow-hidden flex flex-col justify-between group cursor-pointer hover:bg-surface-container-high transition-all duration-300">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-primary/10 transition-colors"></div>
-          <div className="flex justify-between items-start z-10">
-            <span className="material-symbols-outlined text-primary text-4xl" data-icon="vaccines">vaccines</span>
-            <span className="font-label text-[10px] text-on-surface-variant">PRIORITY_02</span>
-          </div>
-          <div className="z-10">
-            <h3 className="font-headline text-2xl font-bold mb-1">Allergic Reaction</h3>
-            <p className="font-body text-sm text-on-surface-variant leading-relaxed max-w-md">Anaphylaxis protocol activation. Monitor airway patency and administer epinephrine if autoinjector is available. Stand by for medic arrival.</p>
-          </div>
-        </div>
+        {/* Option Grid */}
+        <section className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 transition-all`}>
+          {categories.map((cat) => {
+            const isSelected = selectedIds.includes(cat.id);
+            return (
+              <div 
+                key={cat.id}
+                onClick={() => toggleSelection(cat.id)}
+                className={`${cat.colSpan} glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col justify-between group cursor-pointer transition-all border ${isSelected ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 'border-white/5'} ${isTriggered && !isSelected ? 'opacity-30 pointer-events-none' : ''} active:scale-95`}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                
+                {/* Selection Dot */}
+                <div className="absolute top-4 right-4 flex items-center justify-center">
+                  <div className={`w-5 h-5 rounded-full border-2 transition-all duration-300 flex items-center justify-center ${isSelected ? 'border-primary bg-primary' : 'border-on-surface-variant/30'}`}>
+                    {isSelected && <div className="w-2 h-2 bg-white rounded-full"></div>}
+                  </div>
+                </div>
 
-        {/* Severe Injury */}
-        <div className="bg-[#222a3e]/60 backdrop-blur-xl p-6 min-h-[220px] flex flex-col justify-between border-l-2 border-tertiary/20 hover:border-tertiary transition-colors cursor-pointer">
-          <div className="flex justify-between items-start">
-            <span className="material-symbols-outlined text-tertiary text-4xl" data-icon="emergency_rebound">emergency</span>
-            <span className="font-label text-[10px] text-tertiary">URGENT</span>
-          </div>
-          <div>
-            <h3 className="font-headline text-xl font-bold mb-1 uppercase tracking-tight">Severe Injury</h3>
-            <p className="font-body text-xs text-on-surface-variant leading-relaxed">Trauma baseline. Apply direct pressure to wound site. Elevate limb if appropriate. Terminal link established to surgical team.</p>
-          </div>
-        </div>
+                <div className="flex justify-between items-start z-10 mb-8">
+                  <span className={`material-symbols-outlined text-${cat.color} text-4xl`} data-icon={cat.icon}>{cat.icon}</span>
+                  <span className={`font-label text-[10px] px-2 py-1 rounded bg-${cat.color}/10 text-${cat.color}`}>{cat.priority}</span>
+                </div>
+                <div className="z-10">
+                  <h3 className="font-headline text-xl font-bold mb-1">{cat.title}</h3>
+                  <p className="font-body text-xs text-on-surface-variant leading-relaxed">{cat.desc}</p>
+                </div>
+              </div>
+            );
+          })}
+        </section>
 
-        {/* Heart / Chest Pain */}
-        <div className="bg-[#222a3e]/60 backdrop-blur-xl p-6 min-h-[220px] flex flex-col justify-between hover:bg-surface-container-high transition-all duration-300 cursor-pointer">
-          <div className="flex justify-between items-start">
-            <span className="material-symbols-outlined text-primary text-4xl" data-icon="monitor_heart" style={{ fontVariationSettings: "'FILL' 1" }}>monitor_heart</span>
-            <span className="font-label text-[10px] text-on-surface-variant">PRIORITY_01</span>
-          </div>
-          <div>
-            <h3 className="font-headline text-xl font-bold mb-1 uppercase tracking-tight">Chest Pain</h3>
-            <p className="font-body text-xs text-on-surface-variant leading-relaxed">Cardiac distress detected. Position patient in comfortable seated stance. Do not allow physical exertion.</p>
-          </div>
-        </div>
-
-        {/* General First Aid */}
-        <div className="md:col-span-2 bg-[#222a3e]/60 backdrop-blur-xl p-6 min-h-[220px] relative overflow-hidden flex flex-col justify-between hover:bg-surface-container-high transition-all duration-300 cursor-pointer">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b?auto=format&fit=crop&q=80&w=800')] opacity-5 mix-blend-overlay"></div>
-          <div className="flex justify-between items-start z-10">
-            <span className="material-symbols-outlined text-secondary text-4xl" data-icon="medical_services">medical_services</span>
-            <span className="font-label text-[10px] text-on-surface-variant">STANDARD</span>
-          </div>
-          <div className="z-10">
-            <h3 className="font-headline text-2xl font-bold mb-1">General First Aid</h3>
-            <p className="font-body text-sm text-on-surface-variant leading-relaxed max-w-sm">Minor lacerations, heat exhaustion, or general discomfort. Follow guided basic assistance instructions while assistance is dispatched.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Large CTA */}
-      <section className="pt-8 mb-8">
-        <button className="w-full h-24 rounded-lg relative overflow-hidden group">
-          {/* Background Layer */}
-          <div className="absolute inset-0 bg-gradient-to-r from-tertiary-container to-tertiary transition-transform duration-500 group-hover:scale-105"></div>
-          {/* Heavy Coral Ambient Glow */}
-          <div className="absolute inset-0 shadow-[0_0_40px_rgba(244,63,94,0.4)] group-active:shadow-[0_0_60px_rgba(244,63,94,0.6)] transition-all"></div>
-          
+        {/* Immediate Assistance CTA */}
+        <button 
+          onClick={handleTrigger}
+          disabled={selectedIds.length === 0 && !isTriggered}
+          className={`w-full h-20 rounded-2xl relative overflow-hidden group mb-4 transition-all ${isTriggered ? 'opacity-100' : selectedIds.length > 0 ? 'opacity-100 shadow-[0_0_40px_rgba(59,130,246,0.3)]' : 'opacity-50 grayscale'}`}
+        >
+          <div className={`absolute inset-0 bg-gradient-to-r ${isTriggered ? 'from-tertiary to-error' : 'from-primary to-[#1d4ed8]'} transition-transform duration-500 group-hover:scale-105`}></div>
+          <div className={`absolute inset-0 ${isTriggered ? 'shadow-[0_0_60px_rgba(244,63,94,0.8)]' : ''}`}></div>
           <div className="relative flex items-center justify-center gap-4 z-10">
-            <span className="material-symbols-outlined text-on-tertiary-container text-4xl" data-icon="notifications_active" style={{ fontVariationSettings: "'FILL' 1" }}>notifications_active</span>
-            <span className="font-headline font-bold text-2xl uppercase tracking-[0.15em] text-on-tertiary-container">Request Immediate Help</span>
+            <span className="material-symbols-outlined text-white text-3xl" data-icon={isTriggered ? "emergency_share" : "notifications_active"} style={{ fontVariationSettings: "'FILL' 1" }}>{isTriggered ? "emergency_share" : "notifications_active"}</span>
+            <span className="font-headline font-bold text-xl uppercase tracking-[0.15em] text-white">
+              {isTriggered ? "Signal Dispatched" : "Request Dispatch"}
+            </span>
           </div>
-          
-          {/* Terminal scanning line for the button */}
-          <div className="absolute bottom-0 left-0 h-[2px] bg-white/30 w-full animate-pulse"></div>
+          <div className="scanning-line opacity-30"></div>
         </button>
-        <p className="text-center mt-4 font-label text-[10px] text-on-surface-variant uppercase tracking-widest opacity-60">Emergency Dispatcher will be notified of your exact telemetry and location.</p>
-      </section>
-    </main>
+      </main>
+
+      {/* Bottom Tactical Nav */}
+      <footer className="fixed bottom-0 w-full z-50 pb-safe bg-[#0B1326]/80 backdrop-blur-lg flex justify-around items-center h-20 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+        <button 
+          onClick={() => router.push('/guest/sos')}
+          className="flex flex-col items-center justify-center text-[#DBE2FD]/40 active:scale-90 transition-all duration-300"
+        >
+          <span className="material-symbols-outlined mb-1" data-icon="arrow_back">arrow_back</span>
+          <span className="font-body text-[10px] font-bold uppercase tracking-tighter">Back to SOS</span>
+        </button>
+        <button 
+          onClick={() => router.push('/guest/alerts')}
+          className="flex flex-col items-center justify-center text-primary active:scale-90 transition-all duration-300"
+        >
+          <span className="material-symbols-outlined mb-1" data-icon="notifications">notifications</span>
+          <span className="font-body text-[10px] font-bold uppercase tracking-tighter">Alerts</span>
+        </button>
+      </footer>
+    </div>
   );
 }
+

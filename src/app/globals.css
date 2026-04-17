@@ -78,3 +78,29 @@
     color: var(--color-on-surface);
   }
 }
+
+@layer components {
+  .glass-card {
+    background: rgba(34, 42, 62, 0.6);
+    backdrop-filter: blur(12px);
+  }
+  
+  .sos-glow {
+    box-shadow: 0 0 40px rgba(244, 63, 94, 0.3);
+  }
+  
+  .scanning-line {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: rgba(244, 63, 94, 0.5);
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.8);
+    animation: scan 4s linear infinite;
+  }
+}
+
+@keyframes scan {
+  0% { top: 0; }
+  100% { top: 100%; }
+}
