@@ -1,0 +1,15 @@
+type Ticket @table {
+  id: UUID! @default(expr: "uuidV4()")
+  issuedAt: Timestamp! @default(expr: "request.time")
+  gate: String!
+  section: String!
+  row: String!
+  seat: String!
+  status: String! @default(value: "ACTIVE")
+}
+
+# The Admin creates tickets. We define a GraphQL mutation to create a Ticket.
+type Mutation {
+  createTicket(gate: String!, section: String!, row: String!, seat: String!): Ticket! @firebaseOp(name: "createTicket") @ref
+}
+

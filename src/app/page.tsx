@@ -18,7 +18,7 @@ export default function LandingPage() {
             <span className="text-slate-400 hover:text-slate-100 transition-colors cursor-pointer">Support</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/guest/dashboard" className="font-label text-sm uppercase tracking-widest text-primary hover:text-primary-fixed transition-colors">
+            <Link href="/guest/scan" className="font-label text-sm uppercase tracking-widest text-primary hover:text-primary-fixed transition-colors">
               Guest Access
             </Link>
             <Link href="/login" className="bg-primary text-on-primary font-label text-sm uppercase tracking-widest px-6 py-3 rounded-xl hover:bg-primary-fixed transition-all shadow-lg hover:shadow-primary/20">
@@ -54,7 +54,7 @@ export default function LandingPage() {
           {/* Bento Layout for Portals */}
           <div className="grid grid-cols-1 md:grid-cols-12 gap-8 mb-24">
             {/* Guest Portal Card */}
-            <Link href="/guest/dashboard" className="md:col-span-5 bg-[#2d3449]/60 backdrop-blur-[12px] border-t border-l border-[#45464d]/15 rounded-[2rem] p-10 flex flex-col justify-between group hover:bg-surface-variant/80 transition-all duration-300 shadow-[0_16px_32px_rgba(6,14,32,0.4)] cursor-pointer relative overflow-hidden min-h-[280px]">
+            <Link href="/guest/scan" className="md:col-span-5 bg-[#2d3449]/60 backdrop-blur-[12px] border-t border-l border-[#45464d]/15 rounded-[2rem] p-10 flex flex-col justify-between group hover:bg-surface-variant/80 transition-all duration-300 shadow-[0_16px_32px_rgba(6,14,32,0.4)] cursor-pointer relative overflow-hidden min-h-[280px]">
               <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 bg-secondary/10 rounded-full blur-3xl group-hover:bg-secondary/20 transition-all"></div>
               <div className="mb-8 flex items-center justify-between z-10">
                 <span className="material-symbols-outlined text-4xl text-primary" data-icon="qr_code_scanner" style={{ fontVariationSettings: "'FILL' 0" }}>qr_code_scanner</span>

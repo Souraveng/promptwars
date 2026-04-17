@@ -1,7 +1,45 @@
-import React from 'react';
-import Link from 'next/link';
+"use client";
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '@/lib/firebase-client';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError('');
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+      router.push('/admin/monitor');
+    } catch (err: any) {
+      console.error(err);
+      setError('Google Sign-In failed: ' + err.message);
+      setLoading(false);
+    }
+  };
+
+  const handleEmailSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      router.push('/admin/monitor');
+    } catch (err: any) {
+      console.error(err);
+      setError('Invalid credentials.');
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="bg-background text-on-background font-body min-h-screen flex flex-col justify-center items-center relative overflow-hidden selection:bg-primary selection:text-on-primary">
       {/* Asymmetric Ambient Background Elements */}
@@ -22,8 +60,20 @@ export default function LoginPage() {
 
         {/* Glassmorphism Login Card */}
         <div className="w-full bg-surface-variant/60 backdrop-blur-xl rounded-[2rem] border-t border-l border-outline-variant/15 p-8 shadow-[0_16px_32px_rgba(6,14,32,0.4)] flex flex-col gap-6">
+          
+          {error && (
+            <div className="bg-red-900/30 border border-red-500/50 p-3 rounded text-red-200 text-xs text-center font-bold font-['Inter']">
+              {error}
+            </div>
+          )}
+
           {/* Prominent Google Sign-In */}
-          <button className="w-full flex items-center justify-center gap-3 bg-primary text-on-primary hover:bg-primary-fixed-dim transition-colors duration-200 py-3.5 px-4 rounded-xl font-body font-semibold text-sm">
+          <button 
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 bg-primary text-on-primary hover:bg-primary-fixed-dim disabled:opacity-50 transition-colors duration-200 py-3.5 px-4 rounded-xl font-body font-semibold text-sm"
+          >
             <svg aria-hidden="true" className="w-5 h-5 fill-current" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#263143"></path>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#263143"></path>
@@ -41,23 +91,38 @@ export default function LoginPage() {
           </div>
           
           {/* Standard Credentials Entry */}
-          <form className="flex flex-col gap-4" action="/admin/dashboard" method="GET">
+          <form className="flex flex-col gap-4" onSubmit={handleEmailSignIn}>
             <div className="flex flex-col gap-1.5">
-              <label className="font-label text-[0.6875rem] uppercase tracking-widest text-on-surface-variant ml-1" htmlFor="admin-id">Admin Credentials</label>
+              <label className="font-label text-[0.6875rem] uppercase tracking-widest text-on-surface-variant ml-1" htmlFor="admin-email">Admin Credentials</label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[1.125rem]" data-icon="badge">badge</span>
-                <input className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl py-2.5 pl-10 pr-4 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 focus:bg-surface-container-low transition-all duration-200" id="admin-id" placeholder="Sentinel ID or Email" type="text" />
+                <input 
+                  id="admin-email"
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl py-2.5 pl-10 pr-4 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 focus:bg-surface-container-low transition-all duration-200" 
+                  placeholder="Sentinel Email" 
+                />
               </div>
             </div>
             <div className="relative">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[1.125rem]" data-icon="key">key</span>
-              <input className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl py-2.5 pl-10 pr-4 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 focus:bg-surface-container-low transition-all duration-200" placeholder="Access Token" type="password" />
+              <input 
+                type="password" 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl py-2.5 pl-10 pr-4 text-sm text-on-surface placeholder:text-outline focus:outline-none focus:border-primary/50 focus:bg-surface-container-low transition-all duration-200" 
+                placeholder="Access Token" 
+              />
             </div>
             
-            <Link href="/admin/monitor" className="w-full mt-2 bg-surface-container-high text-primary hover:bg-surface-container-highest transition-colors duration-200 py-3 rounded-xl font-body font-medium text-sm flex justify-center items-center gap-2 border border-outline-variant/20">
-              Authenticate
+            <button disabled={loading} type="submit" className="w-full mt-2 bg-surface-container-high text-primary hover:bg-surface-container-highest disabled:opacity-50 transition-colors duration-200 py-3 rounded-xl font-body font-medium text-sm flex justify-center items-center gap-2 border border-outline-variant/20">
+              {loading ? 'Authenticating...' : 'Authenticate'}
               <span className="material-symbols-outlined text-[1rem]" data-icon="arrow_forward">arrow_forward</span>
-            </Link>
+            </button>
           </form>
         </div>
       </main>
