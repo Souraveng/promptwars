@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sentinel Venue | Layout Builder</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-container": "#39000b",
+                        "on-secondary-container": "#00311f",
+                        "primary-container": "#0c1829",
+                        "primary": "#bcc7de",
+                        "surface-container-highest": "#2d3449",
+                        "on-error-container": "#ffdad6",
+                        "background": "#0b1326",
+                        "surface-variant": "#2d3449",
+                        "primary-fixed": "#d8e3fb",
+                        "on-primary-fixed-variant": "#3c475a",
+                        "tertiary-fixed": "#ffdadb",
+                        "error": "#ffb4ab",
+                        "on-surface-variant": "#c6c6cd",
+                        "error-container": "#93000a",
+                        "surface-container-lowest": "#060e20",
+                        "on-secondary-fixed-variant": "#005236",
+                        "surface-dim": "#0b1326",
+                        "secondary": "#4edea3",
+                        "on-tertiary-fixed": "#40000d",
+                        "on-primary": "#263143",
+                        "on-primary-container": "#768197",
+                        "surface-bright": "#31394d",
+                        "on-tertiary-container": "#ee3a5a",
+                        "inverse-on-surface": "#283044",
+                        "on-background": "#dae2fd",
+                        "primary-fixed-dim": "#bcc7de",
+                        "tertiary-fixed-dim": "#ffb2b7",
+                        "outline": "#909097",
+                        "surface": "#0b1326",
+                        "outline-variant": "#45464d",
+                        "inverse-surface": "#dae2fd",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-surface": "#dae2fd",
+                        "on-tertiary-fixed-variant": "#92002a",
+                        "on-error": "#690005",
+                        "secondary-fixed-dim": "#4edea3",
+                        "secondary-container": "#00a572",
+                        "inverse-primary": "#545f73",
+                        "on-tertiary": "#67001b",
+                        "tertiary": "#ffb2b7",
+                        "surface-container-high": "#222a3d",
+                        "on-secondary-fixed": "#002113",
+                        "on-secondary": "#003824",
+                        "surface-container-low": "#131b2e",
+                        "surface-container": "#171f33",
+                        "on-primary-fixed": "#111c2d",
+                        "surface-tint": "#bcc7de"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #0b1326; color: #dae2fd; }
+        .font-headline { font-family: 'Space Grotesk', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .glass-panel { background: rgba(23, 31, 51, 0.6); backdrop-filter: blur(12px); border-top: 1px solid rgba(69, 70, 77, 0.2); border-left: 1px solid rgba(69, 70, 77, 0.2); }
+        .canvas-grid { background-image: radial-gradient(rgba(188, 199, 222, 0.05) 1px, transparent 1px); background-size: 32px 32px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #45464d; border-radius: 10px; }
+    </style>
+</head>
+<body class="overflow-hidden h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="bg-[#0b1326] flex justify-between items-center px-6 py-4 w-full z-50">
+<div class="flex items-center gap-8">
+<span class="text-xl font-bold tracking-tight text-[#bcc7de] uppercase font-headline">Sentinel Venue</span>
+<nav class="hidden md:flex gap-6 items-center">
+<a class="text-[#45464d] hover:text-[#bcc7de] transition-colors text-sm font-medium" href="#">Dashboard</a>
+<a class="text-[#45464d] hover:text-[#bcc7de] transition-colors text-sm font-medium" href="#">Events</a>
+<a class="text-[#bcc7de] font-bold text-sm font-medium underline underline-offset-8 decoration-2 decoration-[#4edea3]" href="#">Layout Builder</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden lg:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/40">search</span>
+<input class="bg-surface-container-lowest border-none text-sm rounded-xl pl-10 pr-4 py-2 w-64 focus:ring-1 focus:ring-secondary/30 transition-all" placeholder="Search layout..." type="text"/>
+</div>
+<button class="p-2 rounded-xl hover:bg-[#171f33] transition-colors text-[#bcc7de]">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-xl hover:bg-[#171f33] transition-colors text-[#bcc7de]">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+</header>
+<div class="flex flex-1 overflow-hidden">
+<!-- SideNavBar -->
+<aside class="h-screen w-64 flex flex-col bg-[#0b1326] border-r border-[#45464d]/20 relative z-40">
+<div class="p-6">
+<h2 class="font-headline text-[#bcc7de] text-lg font-bold">Admin Portal</h2>
+<p class="text-[10px] text-[#45464d] uppercase tracking-[0.2em]">Sentinel Lens v1.0</p>
+</div>
+<nav class="flex-1 px-3 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#45464d] hover:text-[#bcc7de] hover:bg-[#131b2e] rounded-lg transition-all text-[11px] font-bold tracking-widest uppercase group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#45464d] hover:text-[#bcc7de] hover:bg-[#131b2e] rounded-lg transition-all text-[11px] font-bold tracking-widest uppercase group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">calendar_today</span>
+                    Events
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#bcc7de] border-r-2 border-[#bcc7de] bg-[#131b2e] rounded-l-lg transition-all text-[11px] font-bold tracking-widest uppercase" href="#">
+<span class="material-symbols-outlined text-xl">architecture</span>
+                    Layout Builder
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#45464d] hover:text-[#bcc7de] hover:bg-[#131b2e] rounded-lg transition-all text-[11px] font-bold tracking-widest uppercase group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">confirmation_number</span>
+                    Tickets
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#45464d] hover:text-[#bcc7de] hover:bg-[#131b2e] rounded-lg transition-all text-[11px] font-bold tracking-widest uppercase group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">sensors</span>
+                    Live Monitor
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#45464d] hover:text-[#bcc7de] hover:bg-[#131b2e] rounded-lg transition-all text-[11px] font-bold tracking-widest uppercase group" href="#">
+<span class="material-symbols-outlined text-xl group-hover:text-primary">campaign</span>
+                    Broadcast
+                </a>
+</nav>
+<div class="p-3 border-t border-[#45464d]/20 space-y-1">
+<a class="flex items-center gap-3 px-4 py-3 text-[#45464d] hover:text-[#bcc7de] hover:bg-[#131b2e] rounded-lg transition-all text-[11px] font-bold tracking-widest uppercase group" href="#">
+<span class="material-symbols-outlined text-xl">settings</span>
+                    Settings
+                </a>
+<a class="flex items-center gap-3 px-4 py-3 text-[#45464d] hover:text-[#bcc7de] hover:bg-[#131b2e] rounded-lg transition-all text-[11px] font-bold tracking-widest uppercase group" href="#">
+<span class="material-symbols-outlined text-xl">help</span>
+                    Support
+                </a>
+</div>
+</aside>
+<!-- Main Workspace -->
+<main class="flex-1 flex flex-col relative bg-surface-container-lowest">
+<!-- Builder Toolbar -->
+<div class="h-16 flex items-center justify-between px-6 bg-surface-container/30 backdrop-blur-md border-b border-outline-variant/10">
+<div class="flex items-center gap-2">
+<div class="flex bg-surface-container-low p-1 rounded-xl">
+<button class="p-2 text-primary hover:bg-surface-container rounded-lg flex items-center gap-2 px-3 transition-all">
+<span class="material-symbols-outlined text-sm">upload_file</span>
+<span class="text-xs font-medium">Import Map</span>
+</button>
+</div>
+<div class="h-6 w-px bg-outline-variant/20 mx-2"></div>
+<div class="flex gap-2">
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-xl transition-all flex items-center gap-2 px-3">
+<span class="material-symbols-outlined text-sm">polyline</span>
+<span class="text-xs font-medium">Add Zone</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-xl transition-all flex items-center gap-2 px-3">
+<span class="material-symbols-outlined text-sm">gate</span>
+<span class="text-xs font-medium">Add Gate</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-xl transition-all flex items-center gap-2 px-3">
+<span class="material-symbols-outlined text-sm">storefront</span>
+<span class="text-xs font-medium">Add Stall</span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-secondary hover:bg-secondary/10 rounded-xl transition-all flex items-center gap-2 px-3">
+<span class="material-symbols-outlined text-sm">wc</span>
+<span class="text-xs font-medium">Add Washroom</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary border border-primary/20 rounded-lg hover:bg-primary/5 transition-all">
+                        Save Changes
+                    </button>
+<button class="px-4 py-2 text-xs font-bold uppercase tracking-wider bg-secondary text-on-secondary-container rounded-lg hover:brightness-110 shadow-[0_0_20px_rgba(78,222,163,0.2)] transition-all">
+                        Publish to Guest PWA
+                    </button>
+</div>
+</div>
+<!-- Canvas Area -->
+<div class="flex-1 relative overflow-hidden flex items-center justify-center canvas-grid">
+<!-- Map Background -->
+<div class="relative w-[800px] h-[500px] rounded-2xl overflow-hidden shadow-2xl border border-outline-variant/10">
+<img class="w-full h-full object-cover opacity-40 mix-blend-screen grayscale" data-alt="architectural blueprint floor plan of a massive stadium arena with technical line work on a dark navy background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhmrsrH6KDg6rtnaFUY3beL1F8HN4FGonEoX7hAE-YFg82LrRwSGp8Nzh8SjpGAh3B0fArDNOh6-Ea5qpiToQ1FEn_W8U5Zk9iRpi6qc3BJy9aoR1ZDnNTB64VGeo1_e67Nu2lRW5q77lzIeTlxPrq4LezeWjIlwzatHixzF7L4XVOUUu0DNKRn0hISA33oxDDbhJrAkJTKwZ4R95P8ymuBjl_wsklWRCDN_e8mIsub_qnXdDWIiJwYVs_MNqcBSztkzlTXloNph2v"/>
+<!-- Draggable Markers Mockup -->
+<div class="absolute top-[20%] left-[30%] group cursor-move">
+<div class="w-40 h-24 border-2 border-secondary/50 bg-secondary/10 rounded-xl flex items-center justify-center backdrop-blur-sm group-hover:border-secondary transition-all">
+<span class="text-[10px] font-headline uppercase font-bold text-secondary tracking-widest">Main Stage</span>
+</div>
+<div class="absolute -top-3 -right-3 w-6 h-6 bg-secondary text-on-secondary-container rounded-full flex items-center justify-center text-[10px]">
+<span class="material-symbols-outlined text-sm">drag_indicator</span>
+</div>
+</div>
+<div class="absolute top-[50%] left-[60%] group cursor-move">
+<div class="p-3 bg-surface-bright/80 backdrop-blur-md rounded-full border border-outline-variant/20 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined text-secondary">wc</span>
+</div>
+</div>
+<div class="absolute bottom-[10%] left-[10%] group cursor-move">
+<div class="w-32 h-20 border-2 border-primary/30 bg-primary/5 rounded-xl flex items-center justify-center group-hover:border-primary transition-all">
+<span class="text-[10px] font-headline uppercase font-bold text-primary/60 tracking-widest">VIP Section A</span>
+</div>
+</div>
+</div>
+<!-- Layers Panel (Floating Left) -->
+<div class="absolute left-6 top-6 w-56 flex flex-col gap-4">
+<div class="glass-panel p-4 rounded-2xl shadow-2xl">
+<h3 class="text-[10px] font-bold text-on-surface-variant uppercase tracking-[0.15em] mb-4 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">layers</span>
+                            Layers Panel
+                        </h3>
+<div class="space-y-2">
+<div class="flex items-center justify-between p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-sm">visibility</span>
+<span class="text-xs font-medium">Zones &amp; Areas</span>
+</div>
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+</div>
+<div class="flex items-center justify-between p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-sm">visibility</span>
+<span class="text-xs font-medium">Entry Gates</span>
+</div>
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+</div>
+<div class="flex items-center justify-between p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer opacity-50">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant text-sm">visibility_off</span>
+<span class="text-xs font-medium">Restrooms</span>
+</div>
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+</div>
+<div class="flex items-center justify-between p-2 hover:bg-surface-container rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary text-sm">visibility</span>
+<span class="text-xs font-medium">Vendor Stalls</span>
+</div>
+<div class="w-2 h-2 rounded-full bg-secondary"></div>
+</div>
+</div>
+</div>
+<div class="glass-panel p-3 rounded-2xl shadow-xl flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-[10px] uppercase tracking-tighter text-on-surface-variant">Active Selection</span>
+<span class="text-xs font-bold text-primary">Main Stage Zone</span>
+</div>
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">stars</span>
+</div>
+</div>
+<!-- Zoom Controls -->
+<div class="absolute right-6 bottom-6 flex flex-col gap-2">
+<button class="w-10 h-10 bg-surface-container glass-panel rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-all">
+<span class="material-symbols-outlined">add</span>
+</button>
+<button class="w-10 h-10 bg-surface-container glass-panel rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-all">
+<span class="material-symbols-outlined">remove</span>
+</button>
+<button class="w-10 h-10 bg-surface-container glass-panel rounded-full flex items-center justify-center text-primary hover:bg-primary hover:text-on-primary transition-all">
+<span class="material-symbols-outlined">center_focus_strong</span>
+</button>
+</div>
+</div>
+</main>
+<!-- Right Inspector Sidebar -->
+<aside class="w-80 h-screen glass-panel z-40 flex flex-col border-l border-outline-variant/20 shadow-[-32px_0_64px_rgba(11,19,38,0.2)]">
+<div class="p-6 border-b border-outline-variant/10">
+<h2 class="font-headline text-lg font-bold text-primary">Property Inspector</h2>
+<p class="text-[10px] text-on-surface-variant uppercase tracking-widest">Editing Element: <span class="text-secondary">#MAIN-STAGE-01</span></p>
+</div>
+<div class="flex-1 overflow-y-auto p-6 space-y-8">
+<!-- Label Property -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Element Label</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-secondary/50 focus:border-secondary transition-all outline-none" type="text" value="Main Stage"/>
+</div>
+</div>
+<!-- Capacity Property -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Target Capacity</label>
+<div class="flex items-center gap-4">
+<input class="flex-1 accent-secondary" type="range"/>
+<span class="text-sm font-headline font-bold text-secondary">15,000</span>
+</div>
+</div>
+<!-- Status Property -->
+<div class="space-y-3">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Access Status</label>
+<div class="grid grid-cols-2 gap-2">
+<button class="px-4 py-3 bg-secondary/10 border border-secondary/50 text-secondary rounded-xl text-xs font-bold transition-all">Public</button>
+<button class="px-4 py-3 bg-surface-container-low border border-outline-variant/20 text-on-surface-variant rounded-xl text-xs font-bold transition-all">Restricted</button>
+</div>
+</div>
+<!-- Stats Visual -->
+<div class="bg-surface-container-low rounded-2xl p-4 border border-outline-variant/10">
+<div class="flex justify-between items-center mb-4">
+<span class="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">Zone Metrics</span>
+<span class="material-symbols-outlined text-secondary text-sm">analytics</span>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-end">
+<span class="text-[10px] text-on-surface-variant">Flow Density</span>
+<span class="text-xs font-bold text-secondary">Optimal</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="w-[65%] h-full bg-secondary shadow-[0_0_8px_rgba(78,222,163,0.4)]"></div>
+</div>
+<div class="flex justify-between items-end">
+<span class="text-[10px] text-on-surface-variant">PWA Sync</span>
+<span class="text-xs font-bold text-primary">Active</span>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<label class="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Action History</label>
+<div class="space-y-3">
+<div class="flex gap-3 items-start opacity-70">
+<div class="w-1.5 h-1.5 rounded-full bg-secondary mt-1"></div>
+<div class="flex flex-col">
+<span class="text-[11px] font-medium">Relocated 'Main Stage'</span>
+<span class="text-[9px] text-outline uppercase">2 mins ago</span>
+</div>
+</div>
+<div class="flex gap-3 items-start opacity-50">
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-1"></div>
+<div class="flex flex-col">
+<span class="text-[11px] font-medium">Updated Capacity: 15k</span>
+<span class="text-[9px] text-outline uppercase">10 mins ago</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-6 border-t border-outline-variant/10">
+<button class="w-full py-4 bg-error/10 text-error hover:bg-error/20 border border-error/20 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+                    Delete Selection
+                </button>
+</div>
+</aside>
+</div>
+<!-- Mobile Nav Anchor -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-safe h-20 bg-[#0b1326]/60 backdrop-blur-xl border-t border-[#45464d]/20 shadow-[0_-16px_32px_rgba(11,19,38,0.4)] rounded-t-xl">
+<button class="flex flex-col items-center justify-center text-[#bcc7de]/50 p-2 group">
+<span class="material-symbols-outlined text-xl">home</span>
+<span class="text-[10px] font-medium uppercase font-label">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center bg-[#bcc7de]/10 text-[#4edea3] rounded-xl p-2">
+<span class="material-symbols-outlined text-xl">architecture</span>
+<span class="text-[10px] font-medium uppercase font-label">Builder</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#bcc7de]/50 p-2">
+<span class="material-symbols-outlined text-xl">map</span>
+<span class="text-[10px] font-medium uppercase font-label">Map</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#bcc7de]/50 p-2">
+<span class="material-symbols-outlined text-xl">groups</span>
+<span class="text-[10px] font-medium uppercase font-label">Crowd</span>
+</button>
+<button class="flex flex-col items-center justify-center text-[#bcc7de]/50 p-2">
+<span class="material-symbols-outlined text-xl">notifications</span>
+<span class="text-[10px] font-medium uppercase font-label">Alerts</span>
+</button>
+</nav>
+</body></html>
