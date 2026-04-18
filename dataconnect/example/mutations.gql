@@ -25,7 +25,10 @@ mutation CreateEvent(
   $venueLat: Float!,
   $venueLng: Float!,
   $description: String,
-  $isActive: Boolean = false
+  $isActive: Boolean = false,
+  $minAge: Int = 0,
+  $layoutId: UUID = null,
+  $layoutConfig: String = null
 ) @auth(level: PUBLIC) {
   event_insert(data: {
     title: $title,
@@ -33,8 +36,70 @@ mutation CreateEvent(
     venueLat: $venueLat,
     venueLng: $venueLng,
     description: $description,
-    isActive: $isActive
+    isActive: $isActive,
+    minAge: $minAge,
+    layoutId: $layoutId,
+    layoutConfig: $layoutConfig
   })
+}
+
+# Ticket Issuance
+mutation IssueTicket(
+  $eventId: UUID!,
+  $gate: String!,
+  $section: String!,
+  $row: String!,
+  $seat: String!,
+  $guestName: String!,
+  $guestAge: Int!,
+  $guestIdNumber: String!,
+  $guestMobile: String!,
+  $guestEmail: String!
+) @auth(level: PUBLIC) {
+  ticket_insert(data: {
+    eventId: $eventId,
+    gate: $gate,
+    section: $section,
+    row: $row,
+    seat: $seat,
+    guestName: $guestName,
+    guestAge: $guestAge,
+    guestIdNumber: $guestIdNumber,
+    guestMobile: $guestMobile,
+    guestEmail: $guestEmail,
+    status: "ACTIVE"
+  })
+}
+
+# Venue Layout CRUD
+mutation CreateVenueLayout($name: String!, $elements: String!) @auth(level: PUBLIC) {
+  venueLayout_insert(data: {
+    name: $name,
+    elements: $elements
+  })
+}
+
+mutation UpdateVenueLayout($id: UUID!, $name: String, $elements: String) @auth(level: PUBLIC) {
+  venueLayout_update(id: $id, data: {
+    name: $name,
+    elements: $elements
+  })
+}
+
+mutation DeleteVenueLayout($id: UUID!) @auth(level: PUBLIC) {
+  venueLayout_delete(id: $id)
+}
+
+mutation DeleteEvent($id: UUID!) @auth(level: PUBLIC) {
+  event_delete(id: $id)
+}
+
+mutation DeleteTicketsByEvent($eventId: UUID!) @auth(level: PUBLIC) {
+  ticket_deleteMany(where: { eventId: { eq: $eventId } })
+}
+
+mutation DeleteEmergencyEventsByEvent($eventId: UUID!) @auth(level: PUBLIC) {
+  emergencyEvent_deleteMany(where: { eventId: { eq: $eventId } })
 }
 
 # Toggle an event as the active one for the tactical dashboard

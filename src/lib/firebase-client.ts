@@ -25,11 +25,10 @@ export const dataconnect = getDataConnect(app, {
   connector: "example"
 });
 
-// Connect to emulator in development - using 127.0.0.1 for better reliability
-if (typeof window !== 'undefined') {
-  const isDev = window.location.hostname === 'localhost' || process.env.NODE_ENV !== 'production';
-  if (isDev) {
-    console.info('[Firebase] Connecting to Data Connect Emulator at 127.0.0.1:9399');
-    connectDataConnectEmulator(dataconnect, '127.0.0.1', 9399);
-  }
+// Connect to emulator in development
+const isDev = process.env.NODE_ENV !== 'production';
+if (isDev) {
+  const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
+  console.info(`[Firebase] Connecting to Data Connect Emulator at ${host}:9399`);
+  connectDataConnectEmulator(dataconnect, host, 9399);
 }

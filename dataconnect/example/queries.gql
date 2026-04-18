@@ -9,6 +9,9 @@ query ListEvents @auth(level: PUBLIC) {
     description
     startTime
     isActive
+    minAge
+    layoutId
+    layoutConfig
   }
 }
 
@@ -37,6 +40,41 @@ query GetEmergencyEvents($eventId: UUID) @auth(level: PUBLIC) {
     lat
     lng
     timestamp
+    status
+    eventId
+  }
+}
+# Venue Layout Queries
+query ListVenueLayouts @auth(level: PUBLIC) {
+  venueLayouts(orderBy: [{ createdAt: DESC }]) {
+    id
+    name
+    elements
+    createdAt
+  }
+}
+
+query GetVenueLayout($id: UUID!) @auth(level: PUBLIC) {
+  venueLayout(id: $id) {
+    id
+    name
+    elements
+    createdAt
+  }
+}
+query ListTickets($eventId: UUID) @auth(level: PUBLIC) {
+  tickets(where: { eventId: { eq: $eventId } }, orderBy: [{ issuedAt: DESC }]) {
+    id
+    guestName
+    guestEmail
+    guestAge
+    guestMobile
+    guestIdNumber
+    gate
+    section
+    row
+    seat
+    issuedAt
     status
     eventId
   }

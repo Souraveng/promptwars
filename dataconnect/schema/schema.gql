@@ -1,3 +1,10 @@
+type VenueLayout @table {
+  id: UUID! @default(expr: "uuidV4()")
+  name: String!
+  elements: String! # JSON string of CanvasElements
+  createdAt: Timestamp! @default(expr: "request.time")
+}
+
 type Event @table {
   id: UUID! @default(expr: "uuidV4()")
   title: String!
@@ -7,6 +14,9 @@ type Event @table {
   description: String
   startTime: Timestamp! @default(expr: "request.time")
   isActive: Boolean! @default(value: false)
+  minAge: Int @default(value: 0)
+  layoutId: UUID
+  layoutConfig: String # JSON mapping element ID -> capacity configuration
 }
 
 type Ticket @table {
@@ -17,6 +27,16 @@ type Ticket @table {
   row: String!
   seat: String!
   status: String! @default(value: "ACTIVE")
+  
+  # Guest Information
+  guestName: String!
+  guestAge: Int!
+  guestIdNumber: String!
+  guestMobile: String!
+  guestEmail: String!
+  
+  # Relationships
+  eventId: UUID!
 }
 
 type EmergencyEvent @table {

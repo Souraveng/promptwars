@@ -7,6 +7,44 @@ export interface Event {
   description?: string;
   startTime: string;
   isActive: boolean;
+  minAge?: number;
+  layoutId?: string | null;
+  layoutConfig?: string | null;
+}
+
+export interface Ticket {
+  id: string;
+  issuedAt: string;
+  gate: string;
+  section: string;
+  row: string;
+  seat: string;
+  status: string;
+  guestName: string;
+  guestAge: number;
+  guestEmail: string;
+  guestMobile: string;
+  guestIdNumber: string;
+  eventId: string;
+}
+
+export interface VenueLayout {
+  id: string;
+  name: string;
+  elements: string; // JSON
+  createdAt: string;
+}
+
+export interface ListEventsData {
+  events: Event[];
+}
+
+export interface ListVenueLayoutsData {
+  venueLayouts: VenueLayout[];
+}
+
+export interface GetVenueLayoutData {
+  venueLayout: VenueLayout;
 }
 
 export interface EmergencyEvent {
@@ -21,10 +59,6 @@ export interface EmergencyEvent {
   status: string;
 }
 
-export interface ListEventsData {
-  events: Event[];
-}
-
 export interface GetActiveEventData {
   events: Event[];
 }
@@ -33,11 +67,19 @@ export interface GetEmergencyEventsData {
   emergencyEvents: EmergencyEvent[];
 }
 
-export interface LogEmergencyEventVariables {
-  type: string;
-  priority: string;
-  details: string;
-  lat?: number | null;
-  lng?: number | null;
-  eventId?: string | null;
+export interface ListTicketsData {
+  tickets: Ticket[];
+}
+
+export interface IssueTicketVariables {
+  eventId: string;
+  gate: string;
+  section: string;
+  row: string;
+  seat: string;
+  guestName: string;
+  guestAge: number;
+  guestIdNumber: string;
+  guestMobile: string;
+  guestEmail: string;
 }

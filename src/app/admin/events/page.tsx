@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { dataconnect, GOOGLE_MAPS_API_KEY, MAP_LIBRARIES, DEFAULT_MAP_ID } from '@/lib/firebase-client';
 import { executeMutation, executeQuery, mutationRef, queryRef } from 'firebase/data-connect';
-import { ListEventsData, Event } from '@/types/dataconnect';
+import { ListEventsData, Event, ListVenueLayoutsData, VenueLayout } from '@/types/dataconnect';
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
 
 const MAP_ID = DEFAULT_MAP_ID;
@@ -39,8 +39,13 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     time: '',
     lat: -34.397, // Default starting lat
     lng: 150.644, // Default starting lng
-    isActive: false
+    isActive: false,
+    layoutId: '',
+    minAge: 0,
   });
+  const [layouts, setLayouts] = useState<VenueLayout[]>([]);
+  const [selectedLayout, setSelectedLayout] = useState<VenueLayout | null>(null);
+  const [sectionCapacities, setSectionCapacities] = useState<Record<string, number>>({});
 
   const { isLoaded, loadError } = useJsApiLoader({
     id: 'google-map-script',
@@ -101,6 +106,63 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     };
   }, [isLoaded, map]);
 
+  useEffect(() => {
+    const fetchLayouts = async () => {
+      console.log('[TacticalOS] Fetching layouts for deployment modal...');
+      try {
+        const qRef = queryRef<ListVenueLayoutsData, {}>(dataconnect, 'ListVenueLayouts', {});
+        const result = await executeQuery(qRef);
+        console.log('[TacticalOS] Layout fetch raw result:', JSON.stringify(result.data));
+        
+        if (result.data?.venueLayouts) {
+          console.log(`[TacticalOS] Successfully loaded ${result.data.venueLayouts.length} layouts.`);
+          setLayouts(result.data.venueLayouts);
+        } else {
+          console.warn('[TacticalOS] No venueLayouts found in response.');
+        }
+      } catch (err) {
+        console.error('[TacticalOS] Failed to fetch layouts:', err);
+      }
+    };
+
+    fetchLayouts();
+
+    // Listen for saves from the Venue Builder tab/window
+    window.addEventListener('venue-layout-saved', fetchLayouts);
+    return () => window.removeEventListener('venue-layout-saved', fetchLayouts);
+  }, []);
+
+  useEffect(() => {
+    if (formData.layoutId) {
+      const layout = layouts.find(l => l.id === formData.layoutId);
+      if (layout) {
+        setSelectedLayout(layout);
+        try {
+          const elements = JSON.parse(layout.elements) as any[];
+          const initialCaps: Record<string, number> = {};
+          
+          console.log(`[TacticalOS] Importing layout "${layout.name}" with ${elements.length} elements...`);
+          
+          elements.forEach(el => {
+            // Include ALL types that might have capacity (zone, polygon, seat, stall)
+            const capacityTypes = ['zone', 'polygon', 'seat', 'stall', 'rectangle'];
+            if (capacityTypes.includes(el.type)) {
+              initialCaps[el.id] = el.capacity || 0;
+            }
+          });
+          
+          console.log('[TacticalOS] Imported Capacities:', initialCaps);
+          setSectionCapacities(initialCaps);
+        } catch (err) {
+          console.error('[TacticalOS] Layout parse failed:', err);
+        }
+      }
+    } else {
+      setSelectedLayout(null);
+      setSectionCapacities({});
+    }
+  }, [formData.layoutId, layouts]);
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -113,7 +175,10 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
         venueLat: formData.lat,
         venueLng: formData.lng,
         description: formData.description,
-        isActive: formData.isActive
+        isActive: formData.isActive,
+        minAge: formData.minAge,
+        layoutId: formData.layoutId || null,
+        layoutConfig: JSON.stringify(sectionCapacities)
       });
 
       const result = await executeMutation(mRef);
@@ -177,6 +242,21 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                   className="w-4 h-4 rounded border-outline-variant/30 text-primary focus:ring-primary"
                 />
                 <label htmlFor="isActive" className="text-sm font-medium text-on-surface">Set as Active Event</label>
+              </div>
+
+              <div>
+                <label className="block text-[0.6875rem] uppercase tracking-wider text-primary mb-2 font-semibold">Min. Age Requirement</label>
+                <select
+                  className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50 appearance-none cursor-pointer"
+                  value={formData.minAge}
+                  onChange={e => setFormData({ ...formData, minAge: parseInt(e.target.value) })}
+                >
+                  <option value={0}>All Ages</option>
+                  <option value={12}>12+ (PG)</option>
+                  <option value={16}>16+ (Teen)</option>
+                  <option value={18}>18+ (Adult)</option>
+                  <option value={21}>21+ (Restricted)</option>
+                </select>
               </div>
             </div>
 
@@ -248,6 +328,59 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                   <p className="text-xs font-mono text-primary">{formData.lng.toFixed(6)}</p>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[0.6875rem] uppercase tracking-wider text-primary mb-2 font-semibold">Venue Layout & Capacity</label>
+            <div className="flex flex-col gap-4 bg-surface-container-lowest/30 p-4 rounded-xl border border-outline-variant/10">
+              <select
+                className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-all"
+                value={formData.layoutId}
+                onChange={e => setFormData({ ...formData, layoutId: e.target.value })}
+              >
+                <option value="">No Layout (Default)</option>
+                {layouts.map(l => (
+                  <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
+              </select>
+
+              {selectedLayout && (
+                <div className="space-y-4">
+                  <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest flex items-center justify-between border-b border-outline-variant/10 pb-2">
+                    <span>Section / Block</span>
+                    <span>Max Capacity</span>
+                  </div>
+                  <div className="max-h-48 overflow-y-auto space-y-2 pr-2 scrollbar-style">
+                    {(() => {
+                      const elements = JSON.parse(selectedLayout.elements) as any[];
+                      return Object.entries(sectionCapacities).map(([id, cap]) => {
+                        const el = elements.find(e => e.id === id);
+                        return (
+                          <div key={id} className="flex items-center justify-between gap-4 p-2 bg-surface-container rounded-lg border border-outline-variant/5">
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: el?.color || '#3B82F6' }}></div>
+                              <span className="text-xs font-medium text-on-surface">{el?.label || 'Unknown Sector'}</span>
+                            </div>
+                            <input
+                              type="number"
+                              className="w-20 bg-surface-container-lowest border border-outline-variant/20 rounded-md px-2 py-1 text-xs text-secondary font-bold focus:outline-none focus:border-secondary/50"
+                              value={cap}
+                              onChange={e => setSectionCapacities({ ...sectionCapacities, [id]: Number(e.target.value) })}
+                            />
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                  <div className="pt-2 border-t border-outline-variant/10 flex justify-between items-center px-2">
+                    <span className="text-[10px] font-bold text-on-surface-variant uppercase">Total Seat Capacity</span>
+                    <span className="text-sm font-headline font-bold text-primary">
+                      {Object.values(sectionCapacities).reduce((a, b) => a + b, 0).toLocaleString()} SEATS
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -332,6 +465,33 @@ export default function EventManagementPage() {
     }
   };
 
+  const handleDeleteEvent = async (id: string) => {
+    if (!window.confirm("CRITICAL ACTION: Permanently delete this deployment and ALL associated tactical data (Tickets, Emergency Logs)? This cannot be undone.")) return;
+    
+    setLoading(true);
+    try {
+      // Cascade Delete Part 1: Tickets
+      const tRef = mutationRef(dataconnect, 'DeleteTicketsByEvent', { eventId: id });
+      await executeMutation(tRef);
+
+      // Cascade Delete Part 2: Emergency Logs
+      const eRef = mutationRef(dataconnect, 'DeleteEmergencyEventsByEvent', { eventId: id });
+      await executeMutation(eRef);
+
+      // Final Step: Delete the event record
+      const evRef = mutationRef(dataconnect, 'DeleteEvent', { id });
+      await executeMutation(evRef);
+      
+      console.log(`[TacticalOS] Deployment ${id} wiped.`);
+      fetchEvents();
+    } catch (err) {
+      console.error('[TacticalOS] Deletion crash:', err);
+      alert("Deletion failed. Check console for tactical reports.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       {showModal && <NewEventModal onClose={() => setShowModal(false)} onCreated={fetchEvents} />}
@@ -339,7 +499,7 @@ export default function EventManagementPage() {
       <div className="flex flex-col gap-4 w-full p-4 sm:p-6">
         <header className="flex justify-between items-end">
           <div>
-            <h2 className="text-3xl font-headline font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-fixed-dim">Events Schedule</h2>
+            <h2 className="text-3xl font-headline text-on-surface font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-fixed-dim">Events Schedule</h2>
             <p className="text-sm text-on-surface-variant mt-1">Manage tactical venue deployments.</p>
           </div>
           <button
@@ -407,7 +567,17 @@ export default function EventManagementPage() {
 
                 <div className="text-right">
                   <p className="text-[10px] text-on-surface-variant uppercase tracking-tighter">Venue Location</p>
-                  <p className="text-xs font-mono text-primary">{event.venueLat.toFixed(4)}, {event.venueLng.toFixed(4)}</p>
+                  <p className="text-xs font-mono text-primary">{event.venueLat?.toFixed(4)}, {event.venueLng?.toFixed(4)}</p>
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button 
+                      onClick={() => handleDeleteEvent(event.id)}
+                      className="p-2 text-outline-variant hover:text-error hover:bg-error/10 rounded-lg transition-all flex items-center gap-1.5"
+                      title="Wipe Tactical Deployment"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest hidden group-hover:block">Wipe Data</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -415,6 +585,20 @@ export default function EventManagementPage() {
                 <div className="flex-1">
                   <p className="text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1">Description</p>
                   <p className="text-sm text-on-surface leading-snug">{event.description || 'No description provided.'}</p>
+                </div>
+                <div className="flex gap-4 border-l border-outline-variant/10 pl-6">
+                  <div className="text-center">
+                    <p className="text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1">Min Age</p>
+                    <p className="text-sm font-bold text-primary">{event.minAge ? `${event.minAge}+` : 'All Ages'}</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1">Capacity</p>
+                    <p className="text-sm font-bold text-secondary">
+                      {event.layoutConfig 
+                        ? Object.values(JSON.parse(event.layoutConfig) as Record<string, number>).reduce((a, b) => a + b, 0)
+                        : 0}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
