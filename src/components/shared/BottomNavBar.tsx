@@ -8,11 +8,11 @@ export default function BottomNavBar() {
   const pathname = usePathname();
 
   const links = [
-    { href: '/guest/dashboard', icon: 'home', label: 'Home' },
-    { href: '/guest/tickets', icon: 'confirmation_number', label: 'Ticket' },
-    { href: '/guest/map', icon: 'map', label: 'Map' },
-    { href: '/guest/crowd', icon: 'groups', label: 'Crowd' },
-    { href: '/guest/alerts', icon: 'notifications', label: 'Alerts' },
+    { href: '/guest/dashboard', icon: 'home',                label: 'Home'    },
+    { href: '/guest/tickets',   icon: 'confirmation_number', label: 'Ticket'  },
+    { href: '/guest/map',       icon: 'map',                 label: 'Map'     },
+    { href: '/guest/crowd',     icon: 'groups',              label: 'Crowd'   },
+    { href: '/guest/medical',   icon: 'medical_services',    label: 'Medical' },
   ];
 
   return (

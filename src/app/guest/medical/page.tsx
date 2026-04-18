@@ -122,7 +122,7 @@ export default function GuestMedicalPage() {
   return (
     <div className="bg-surface font-body text-on-surface selection:bg-primary-container min-h-screen w-full flex flex-col relative overflow-x-hidden">
       {/* Top Tactical Header */}
-      <header className="fixed top-0 w-full z-50 bg-[#0B1326]/60 backdrop-blur-md flex justify-between items-center h-16 px-6 shadow-[0_1px_0_0_rgba(219,226,253,0.05)]">
+      <header className="fixed top-0 w-full z-30 bg-[#0B1326]/60 backdrop-blur-md flex justify-between items-center h-16 px-6 shadow-[0_1px_0_0_rgba(219,226,253,0.05)]">
         <div className="flex items-center gap-3">
           <span className={`material-symbols-outlined ${isTriggered ? 'text-tertiary animate-pulse' : 'text-primary'}`} data-icon="medical_services">medical_services</span>
           <span className="text-sm font-bold tracking-[0.2em] text-[#DBE2FD] font-headline uppercase">
@@ -212,7 +212,7 @@ export default function GuestMedicalPage() {
       </main>
 
       {/* Bottom Tactical Nav */}
-      <footer className="fixed bottom-0 w-full z-50 pb-safe bg-[#0B1326]/80 backdrop-blur-lg flex justify-around items-center h-20 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+      <footer className="fixed bottom-0 w-full z-30 pb-safe bg-[#0B1326]/80 backdrop-blur-lg flex justify-around items-center h-20 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
         <button 
           onClick={() => router.push('/guest/sos')}
           className="flex flex-col items-center justify-center text-[#DBE2FD]/40 active:scale-90 transition-all duration-300"
