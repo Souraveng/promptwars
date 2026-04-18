@@ -161,7 +161,7 @@ export default function EventManagementPage() {
     <>
       {showModal && <NewEventModal onClose={() => setShowModal(false)} />}
 
-      <div className="flex flex-col gap-6 w-full p-6">
+      <div className="flex flex-col gap-4 w-full p-4 sm:p-6">
         <header className="flex justify-between items-end">
           <div>
             <h2 className="text-3xl font-headline font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-fixed-dim">Events Schedule</h2>
@@ -178,7 +178,7 @@ export default function EventManagementPage() {
 
         {/* Filters & Search */}
         <div className="flex flex-wrap lg:flex-nowrap gap-4 items-center bg-surface-container-low p-2 rounded-xl border border-outline-variant/10">
-          <div className="relative flex-1 min-w-[200px]">
+          <div className="relative flex-1 min-w-0">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
             <input
               className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-lg pl-10 pr-4 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-colors"

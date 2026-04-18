@@ -2,6 +2,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { auth } from '@/lib/firebase-client';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 
 function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
   useEffect(() => {
@@ -14,11 +16,17 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () =
   }, [ref, handler]);
 }
 
-export default function TopNavBar() {
+export default function TopNavBar({ onMenuClick }: { onMenuClick: () => void }) {
   const [open, setOpen] = useState<'notifications' | 'settings' | 'help' | 'profile' | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   useClickOutside(panelRef, () => setOpen(null));
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, u => setUser(u));
+    return unsub;
+  }, []);
 
   const toggle = (key: typeof open) => setOpen(prev => prev === key ? null : key);
 
@@ -27,13 +35,24 @@ export default function TopNavBar() {
     router.push(path);
   };
 
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
+
+  // Derive display name and initials from Firebase user
+  const displayName = user?.displayName || user?.email?.split('@')[0] || 'Admin User';
+  const email = user?.email || 'admin@sentinellens.io';
+  const photoURL = user?.photoURL;
+  const initials = displayName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+
   return (
     <header className="sticky top-0 z-50 bg-[#0b1326]/90 backdrop-blur-md flex justify-between items-center px-6 h-16 shrink-0 border-b border-outline-variant/20">
       <div className="flex items-center gap-4">
-        <button className="md:hidden text-[#bcc7de]">
+        <button onClick={onMenuClick} className="md:hidden text-[#bcc7de] p-1 hover:bg-[#171f33] rounded-lg transition-colors">
           <span className="material-symbols-outlined">menu</span>
         </button>
-        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <Link href="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <h2 className="font-headline text-xl font-bold text-[#bcc7de] tracking-tighter">Sentinel Lens Admin</h2>
         </Link>
       </div>
@@ -68,16 +87,22 @@ export default function TopNavBar() {
         {/* Profile */}
         <button
           onClick={() => toggle('profile')}
-          className={`ml-1 h-8 w-8 rounded-full bg-primary-container border border-outline-variant/30 flex items-center justify-center transition-all ${open === 'profile' ? 'ring-2 ring-primary/50' : 'hover:ring-2 hover:ring-primary/30'}`}
+          className={`ml-1 h-8 w-8 rounded-full border border-outline-variant/30 flex items-center justify-center transition-all overflow-hidden ${open === 'profile' ? 'ring-2 ring-primary/50' : 'hover:ring-2 hover:ring-primary/30'}`}
         >
-          <span className="material-symbols-outlined text-sm text-primary">person</span>
+          {photoURL ? (
+            <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full bg-primary-container flex items-center justify-center">
+              <span className="text-xs font-bold text-primary">{initials}</span>
+            </div>
+          )}
         </button>
 
         {/* ── Dropdowns ── */}
 
         {/* Notifications panel */}
         {open === 'notifications' && (
-          <div className="absolute top-12 right-0 w-80 bg-surface-container-low border border-outline-variant/20 rounded-2xl shadow-2xl overflow-hidden z-50">
+          <div className="absolute top-12 right-0 w-[calc(100vw-2rem)] max-w-sm bg-surface-container-low border border-outline-variant/20 rounded-2xl shadow-2xl overflow-hidden z-50">
             <div className="flex justify-between items-center px-4 py-3 border-b border-outline-variant/10">
               <span className="font-headline text-sm font-bold text-on-surface">Notifications</span>
               <button className="text-xs text-primary hover:text-primary-fixed">Mark all read</button>
@@ -154,12 +179,16 @@ export default function TopNavBar() {
         {open === 'profile' && (
           <div className="absolute top-12 right-0 w-64 bg-surface-container-low border border-outline-variant/20 rounded-2xl shadow-2xl overflow-hidden z-50">
             <div className="flex items-center gap-3 px-4 py-4 border-b border-outline-variant/10">
-              <div className="w-10 h-10 rounded-full bg-primary-container border border-outline-variant/30 flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary">person</span>
+              <div className="w-10 h-10 rounded-full border border-outline-variant/30 overflow-hidden flex items-center justify-center bg-primary-container shrink-0">
+                {photoURL ? (
+                  <img src={photoURL} alt={displayName} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-sm font-bold text-primary">{initials}</span>
+                )}
               </div>
-              <div>
-                <p className="text-sm font-semibold text-on-surface">Admin User</p>
-                <p className="text-xs text-on-surface-variant">admin@sentinellens.io</p>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-on-surface truncate">{displayName}</p>
+                <p className="text-xs text-on-surface-variant truncate">{email}</p>
               </div>
             </div>
             <div className="flex flex-col py-1">
@@ -175,7 +204,7 @@ export default function TopNavBar() {
               ))}
             </div>
             <div className="border-t border-outline-variant/10 py-1">
-              <button onClick={() => navigate('/login')} className="flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error/5 transition-colors w-full text-left">
+              <button onClick={handleSignOut} className="flex items-center gap-3 px-4 py-2.5 text-sm text-error hover:bg-error/5 transition-colors w-full text-left">
                 <span className="material-symbols-outlined text-sm">logout</span>
                 Sign Out
               </button>

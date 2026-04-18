@@ -2,9 +2,9 @@ import React from 'react';
 
 export default function LiveMonitoringPage() {
   return (
-    <div className="grid grid-cols-12 gap-6 h-full overflow-hidden">
-      {/* Left Panel: The Lens (Heatmap & Spatial Data) */}
-      <section className="col-span-12 xl:col-span-8 relative rounded-2xl overflow-hidden bg-surface-container-lowest flex flex-col min-h-[500px]">
+    <div className="grid grid-cols-12 gap-4 p-4 h-full overflow-auto">
+      {/* Left Panel */}
+      <section className="col-span-12 xl:col-span-8 relative rounded-2xl overflow-hidden bg-surface-container-lowest flex flex-col min-h-[300px] sm:min-h-[400px]">
         {/* Underlay Map Image */}
         <div className="absolute inset-0 z-0">
           <img 
@@ -77,7 +77,7 @@ export default function LiveMonitoringPage() {
       </section>
 
       {/* Right Panel: Data Stream & Logs */}
-      <section className="col-span-12 xl:col-span-4 bg-surface-container-low rounded-2xl flex flex-col min-h-[500px]">
+      <section className="col-span-12 xl:col-span-4 bg-surface-container-low rounded-2xl flex flex-col min-h-[300px]">
         <header className="flex justify-between items-end mb-4 p-6 pb-2 border-b border-outline-variant/10">
           <div className="flex flex-col gap-1">
             <h2 className="font-headline text-xl font-semibold text-primary">Active Stream</h2>
