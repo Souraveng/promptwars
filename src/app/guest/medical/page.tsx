@@ -1,19 +1,75 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocation } from '@/hooks/useLocation';
+import { dataconnect } from '@/lib/firebase-client';
+import { mutationRef, executeMutation, executeQuery, queryRef } from 'firebase/data-connect';
+import { GetActiveEventData, LogEmergencyEventVariables } from '@/types/dataconnect';
 
 export default function GuestMedicalPage() {
   const router = useRouter();
+  const { lat, lng, loading: locationLoading, error: locationError, getLocation, isMock } = useLocation();
   const [isTriggered, setIsTriggered] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
 
-  const handleTrigger = () => {
-    if (selectedIds.length === 0) return;
+  useEffect(() => {
+    const fetchActiveEvent = async () => {
+      try {
+        const qRef = queryRef<GetActiveEventData, {}>(dataconnect, 'GetActiveEvent', {});
+        const result = await executeQuery(qRef);
+        if (result.data?.events && result.data.events.length > 0) {
+          setActiveEventId(result.data.events[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch active event info:', err);
+      }
+    };
+    fetchActiveEvent();
+  }, []);
+
+  const handleTrigger = async () => {
+    if (selectedIds.length === 0 || isTriggered) return;
     setIsTriggered(true);
+    
     // Vibrate device if supported
     if (typeof window !== 'undefined' && window.navigator.vibrate) {
       window.navigator.vibrate([200, 100, 200]);
+    }
+
+    try {
+      // 1. Get Live Location
+      const coords = await getLocation();
+      
+      // 2. Log to Backend
+      const ref = mutationRef<any, LogEmergencyEventVariables>(dataconnect, 'LogEmergencyEvent', {
+        type: 'MEDICAL TRIGGERED',
+        priority: 'HIGH',
+        details: `TRIAGE_REQUEST: ${selectedIds.join(', ')}${isMock ? ' (MOCK_GPS)' : ''}`,
+        lat: coords.lat,
+        lng: coords.lng,
+        eventId: activeEventId
+      });
+      await executeMutation(ref);
+      
+      console.log('Medical emergency logged successfully');
+    } catch (err) {
+      console.error('Failed to log medical emergency (Detailed):', err);
+      // Fallback
+      try {
+        const fallbackRef = mutationRef<any, LogEmergencyEventVariables>(dataconnect, 'LogEmergencyEvent', {
+          type: 'MEDICAL TRIGGERED',
+          priority: 'HIGH',
+          details: `TRIAGE_REQUEST: ${selectedIds.join(', ')} (NO_LOCATION)${isMock ? ' [MOCK_FAIL]' : ''}`,
+          lat: null,
+          lng: null,
+          eventId: activeEventId
+        });
+        await executeMutation(fallbackRef);
+      } catch (innerErr) {
+        console.error('Final fallback log failed (Detailed):', innerErr);
+      }
     }
   };
 

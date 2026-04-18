@@ -1,33 +1,45 @@
-# Example mutations for a simple movie app
-
-# Create a movie based on user input
-mutation CreateMovie($title: String!, $genre: String!, $imageUrl: String!)
-@auth(level: USER_EMAIL_VERIFIED, insecureReason: "Any email verified users can create a new movie.") {
-  movie_insert(data: { title: $title, genre: $genre, imageUrl: $imageUrl })
+# Log an emergency signal from a guest or staff device
+mutation LogEmergencyEvent(
+  $type: String!, 
+  $priority: String!, 
+  $details: String!, 
+  $lat: Float, 
+  $lng: Float,
+  $eventId: UUID
+) @auth(level: PUBLIC) {
+  emergencyEvent_insert(data: {
+    type: $type,
+    priority: $priority,
+    details: $details,
+    lat: $lat,
+    lng: $lng,
+    eventId: $eventId,
+    status: "PENDING"
+  })
 }
 
-# Upsert (update or insert) a user's username based on their auth.uid
-mutation UpsertUser($username: String!) @auth(level: USER) {
-  # The "auth.uid" server value ensures that users can only register their own user.
-  user_upsert(data: { id_expr: "auth.uid", username: $username })
+# Create a new event and set its venue parameters
+mutation CreateEvent(
+  $title: String!,
+  $venueName: String!,
+  $venueLat: Float!,
+  $venueLng: Float!,
+  $description: String,
+  $isActive: Boolean = false
+) @auth(level: PUBLIC) {
+  event_insert(data: {
+    title: $title,
+    venueName: $venueName,
+    venueLat: $venueLat,
+    venueLng: $venueLng,
+    description: $description,
+    isActive: $isActive
+  })
 }
 
-# Add a review for a movie
-mutation AddReview($movieId: UUID!, $rating: Int!, $reviewText: String!)
-@auth(level: USER) {
-  review_upsert(
-    data: {
-      userId_expr: "auth.uid"
-      movieId: $movieId
-      rating: $rating
-      reviewText: $reviewText
-      # reviewDate defaults to today in the schema. No need to set it manually.
-    }
-  )
-}
-
-# Logged in user can delete their review for a movie
-mutation DeleteReview($movieId: UUID!) @auth(level: USER) {
-  # The "auth.uid" server value ensures that users can only delete their own reviews.
-  review_delete(key: { userId_expr: "auth.uid", movieId: $movieId })
+# Toggle an event as the active one for the tactical dashboard
+mutation SetActiveEvent($id: UUID!, $isActive: Boolean!) @auth(level: PUBLIC) {
+  event_update(id: $id, data: {
+    isActive: $isActive
+  })
 }

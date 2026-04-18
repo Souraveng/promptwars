@@ -2,16 +2,37 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocation } from '@/hooks/useLocation';
+import { dataconnect } from '@/lib/firebase-client';
+import { executeMutation, executeQuery, mutationRef, queryRef } from 'firebase/data-connect';
+import { GetActiveEventData, LogEmergencyEventVariables } from '@/types/dataconnect';
 
 export default function GuestSOSPage() {
   const router = useRouter();
+  const { lat, lng, getLocation, isMock } = useLocation();
   const [isHolding, setIsHolding] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isTriggered, setIsTriggered] = useState(false);
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const HOLD_DURATION = 3000; // 3 seconds
+
+  useEffect(() => {
+    const fetchActiveEvent = async () => {
+      try {
+        const ref = queryRef<GetActiveEventData, {}>(dataconnect, 'GetActiveEvent', {});
+        const result = await executeQuery(ref);
+        if (result.data?.events && result.data.events.length > 0) {
+          setActiveEventId(result.data.events[0].id);
+        }
+      } catch (err) {
+        console.error('Failed to fetch active event:', err);
+      }
+    };
+    fetchActiveEvent();
+  }, []);
 
   const startHolding = () => {
     if (isTriggered) return;
@@ -39,12 +60,46 @@ export default function GuestSOSPage() {
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
   };
 
-  const handleTrigger = () => {
+  const handleTrigger = async () => {
+    if (isTriggered) return;
     setIsTriggered(true);
     if (progressIntervalRef.current) clearInterval(progressIntervalRef.current);
+    
     // Vibrate device if supported
     if (typeof window !== 'undefined' && window.navigator.vibrate) {
       window.navigator.vibrate([200, 100, 200]);
+    }
+
+    try {
+      // 1. Get Live Location
+      const coords = await getLocation();
+      
+      // 2. Log to Data Connect
+      const ref = mutationRef<any, LogEmergencyEventVariables>(dataconnect, 'LogEmergencyEvent', {
+        type: 'SOS TRIGGERED',
+        priority: 'HIGH',
+        details: `CRITICAL_SOS_SIGNAL${isMock ? ' (MOCK_LOC)' : ''}`,
+        lat: coords.lat,
+        lng: coords.lng,
+        eventId: activeEventId
+      });
+      await executeMutation(ref);
+      
+      console.log('SOS logged successfully with location:', coords);
+    } catch (err) {
+      console.error('Failed to log SOS:', err);
+      // Even if location fails, we could log with null lat/lng if the schema allows
+      try {
+        const fallbackRef = mutationRef<any, LogEmergencyEventVariables>(dataconnect, 'LogEmergencyEvent', {
+          type: 'SOS TRIGGERED',
+          priority: 'HIGH',
+          details: `CRITICAL_SOS_SIGNAL (NO_LOCATION)${isMock ? ' [MOCK_FAIL]' : ''}`,
+          eventId: activeEventId
+        });
+        await executeMutation(fallbackRef);
+      } catch (innerErr) {
+        console.error('Final fallback log failed:', innerErr);
+      }
     }
   };
 
@@ -89,7 +144,7 @@ export default function GuestSOSPage() {
             <div className={`absolute inset-0 -m-8 border border-tertiary/20 rounded-full ${isHolding || isTriggered ? 'animate-ping' : 'animate-pulse'}`}></div>
             <div className={`absolute inset-0 -m-4 border border-tertiary/40 rounded-full ${isHolding ? 'scale-110' : ''} transition-transform duration-500`}></div>
             
-            {/* Hold progress ring overlay (Visual hack using transparent border/conic gradient if needed, but keeping it simple with CSS) */}
+            {/* Hold progress ring overlay */}
             <svg className="absolute inset-0 -m-4 w-[calc(100%+2rem)] h-[calc(100%+2rem)] -rotate-90">
               <circle
                 cx="50%"
@@ -128,9 +183,10 @@ export default function GuestSOSPage() {
           {/* Coordinate Telemetry */}
           <div className={`mt-12 text-center transition-all duration-700 ${isTriggered ? 'scale-110' : ''}`}>
             <div className={`font-headline text-2xl font-medium tracking-widest transition-colors ${isTriggered ? 'text-tertiary' : 'text-on-surface'}`}>
-              40.7128° N | 74.0060° W
+              {lat ? `${lat.toFixed(6)}° N` : 'LAT LOCKING...'} | {lng ? `${lng.toFixed(6)}° W` : 'LNG LOCKING...'}
             </div>
-            <div className="mt-2 font-label text-[10px] uppercase tracking-[0.3em] text-on-surface-variant">
+            <div className="mt-2 font-label text-[10px] uppercase tracking-[0.3em] text-on-surface-variant flex items-center justify-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${lat ? 'bg-secondary' : 'animate-pulse bg-tertiary'}`}></span>
               Tracking Terminal ID: SENT-99-AX
             </div>
           </div>

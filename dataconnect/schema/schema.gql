@@ -1,3 +1,14 @@
+type Event @table {
+  id: UUID! @default(expr: "uuidV4()")
+  title: String!
+  venueName: String!
+  venueLat: Float!
+  venueLng: Float!
+  description: String
+  startTime: Timestamp! @default(expr: "request.time")
+  isActive: Boolean! @default(value: false)
+}
+
 type Ticket @table {
   id: UUID! @default(expr: "uuidV4()")
   issuedAt: Timestamp! @default(expr: "request.time")
@@ -8,8 +19,15 @@ type Ticket @table {
   status: String! @default(value: "ACTIVE")
 }
 
-# The Admin creates tickets. We define a GraphQL mutation to create a Ticket.
-type Mutation {
-  createTicket(gate: String!, section: String!, row: String!, seat: String!): Ticket! @firebaseOp(name: "createTicket") @ref
+type EmergencyEvent @table {
+  id: UUID! @default(expr: "uuidV4()")
+  eventId: UUID # Optional link to an active event
+  type: String!
+  priority: String!
+  details: String!
+  lat: Float
+  lng: Float
+  timestamp: Timestamp! @default(expr: "request.time")
+  status: String! @default(value: "PENDING")
 }
 

@@ -2,16 +2,65 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import { useLocation } from '@/hooks/useLocation';
+import { dataconnect } from '@/lib/firebase-client';
+import { mutationRef, executeMutation } from 'firebase/data-connect';
 
 export default function GuestSpillPage() {
   const router = useRouter();
+  const { lat, lng, getLocation } = useLocation();
   const [isTriggered, setIsTriggered] = React.useState(false);
+  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
 
-  const handleTrigger = () => {
+  const handleTrigger = async () => {
+    if (selectedIds.length === 0 || isTriggered) return;
     setIsTriggered(true);
+    
+    // Vibrate device if supported
     if (typeof window !== 'undefined' && window.navigator.vibrate) {
       window.navigator.vibrate([200, 100, 200]);
     }
+
+    try {
+      // 1. Get Live Location
+      const coords = await getLocation();
+      
+      // 2. Log to Backend
+      const ref = mutationRef(dataconnect, 'LogEmergencyEvent', {
+        type: 'SPILL',
+        priority: 'PRIORITY_HAZARD',
+        details: `HAZARD_REPORTED: ${selectedIds.join(', ')}`,
+        lat: coords.lat,
+        lng: coords.lng
+      });
+      await executeMutation(ref);
+      
+      console.log('Spill hazard logged successfully');
+    } catch (err) {
+      console.error('Failed to log spill hazard:', err);
+      // Fallback
+      try {
+        const fallbackRef = mutationRef(dataconnect, 'LogEmergencyEvent', {
+          type: 'SPILL',
+          priority: 'PRIORITY_HAZARD',
+          details: `HAZARD_REPORTED: ${selectedIds.join(', ')} (NO_LOCATION)`,
+          lat: null,
+          lng: null
+        });
+        await executeMutation(fallbackRef);
+      } catch (innerErr) {
+        console.error('Final fallback log failed:', innerErr);
+      }
+    }
+  };
+
+  const toggleSelection = (id: string) => {
+    if (isTriggered) return;
+    setSelectedIds(prev => 
+      prev.includes(id) 
+        ? prev.filter(i => i !== id) 
+        : [...prev, id]
+    );
   };
 
   const categories = [
@@ -66,7 +115,7 @@ export default function GuestSpillPage() {
         <div className="font-headline uppercase tracking-widest text-xs text-[#DBE2FD]/60">SENTINEL LENS</div>
       </header>
 
-      <main className="flex-1 flex flex-col pt-20 pb-24 px-6 relative overflow-y-auto scroll-smooth">
+      <main className="flex-1 flex flex-col pt-20 pb-24 px-6 relative overflow-y-auto scroll-smooth text-on-surface">
         {/* Telemetry Grid */}
         <section className="grid grid-cols-2 gap-4 mb-6">
           <div className="glass-card p-4 rounded-xl border border-white/5">
@@ -76,8 +125,10 @@ export default function GuestSpillPage() {
             </p>
           </div>
           <div className="glass-card p-4 rounded-xl border border-white/5 text-right">
-            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">CLEANUP ETA</p>
-            <p className="font-headline text-2xl font-bold text-primary">{isTriggered ? '03:20 MIN' : '05:15 MIN'}</p>
+            <p className="font-label text-[10px] uppercase tracking-widest text-on-surface-variant mb-1">GPS LOCK</p>
+            <p className={`font-headline text-sm font-bold truncate ${lat ? 'text-secondary' : 'text-tertiary animate-pulse'}`}>
+              {lat ? `${lat.toFixed(4)}, ${lng?.toFixed(4)}` : 'ACQUIRING...'}
+            </p>
           </div>
         </section>
 
@@ -92,34 +143,44 @@ export default function GuestSpillPage() {
             </div>
           </div>
           <label className="font-label text-[10px] uppercase tracking-[0.3em] text-on-surface-variant block mb-1">hazard sector</label>
-          <h2 className="font-headline text-3xl font-bold tracking-tight text-on-surface">Section 114, Row G</h2>
+          <h2 className="font-headline text-3xl font-bold tracking-tight">Section 114, Row G</h2>
         </section>
 
         {/* Option Grid */}
         <section className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 transition-opacity ${isTriggered ? 'opacity-50 pointer-events-none' : ''}`}>
-          {categories.map((cat) => (
-            <div 
-              key={cat.id}
-              onClick={handleTrigger}
-              className={`${cat.colSpan} glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col justify-between group cursor-pointer hover:bg-surface-container-high transition-all border border-white/5 active:scale-95`}
-            >
-              <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
-              <div className="flex justify-between items-start z-10 mb-8">
-                <span className={`material-symbols-outlined text-${cat.color} text-4xl`} data-icon={cat.icon}>{cat.icon}</span>
-                <span className={`font-label text-[10px] px-2 py-1 rounded bg-${cat.color}/10 text-${cat.color}`}>{cat.priority}</span>
+          {categories.map((cat) => {
+            const isSelected = selectedIds.includes(cat.id);
+            return (
+              <div 
+                key={cat.id}
+                onClick={() => toggleSelection(cat.id)}
+                className={`${cat.colSpan} glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col justify-between group cursor-pointer hover:bg-surface-container-high transition-all active:scale-95 ${isSelected ? 'ring-2 ring-primary bg-primary/10 border-primary/30' : 'border-white/5'}`}
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                
+                {/* Selection Dot */}
+                <div className="absolute top-4 right-4 z-20">
+                  <div className={`w-4 h-4 rounded-full border-2 transition-all duration-300 ${isSelected ? 'bg-primary border-primary shadow-[0_0_10px_#3b82f6]' : 'border-on-surface-variant/30'}`}></div>
+                </div>
+
+                <div className="flex justify-between items-start z-10 mb-8">
+                  <span className={`material-symbols-outlined text-${cat.color} text-4xl`} data-icon={cat.icon}>{cat.icon}</span>
+                  <span className={`font-label text-[10px] px-2 py-1 rounded bg-${cat.color}/10 text-${cat.color}`}>{cat.priority}</span>
+                </div>
+                <div className="z-10">
+                  <h3 className="font-headline text-xl font-bold mb-1">{cat.title}</h3>
+                  <p className="font-body text-xs text-on-surface-variant leading-relaxed">{cat.desc}</p>
+                </div>
               </div>
-              <div className="z-10">
-                <h3 className="font-headline text-xl font-bold mb-1">{cat.title}</h3>
-                <p className="font-body text-xs text-on-surface-variant leading-relaxed">{cat.desc}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </section>
 
         {/* Immediate Assistance CTA */}
         <button 
           onClick={handleTrigger}
-          className={`w-full h-20 rounded-2xl relative overflow-hidden group mb-4 transition-all ${isTriggered ? 'opacity-100 shadow-[0_0_40px_rgba(59,130,246,0.3)]' : ''}`}
+          disabled={selectedIds.length === 0}
+          className={`w-full h-20 rounded-2xl relative overflow-hidden group mb-4 transition-all ${isTriggered ? 'opacity-100 shadow-[0_0_40px_rgba(59,130,246,0.3)]' : selectedIds.length > 0 ? 'opacity-100' : 'opacity-50 cursor-not-allowed'}`}
         >
           <div className={`absolute inset-0 bg-gradient-to-r ${isTriggered ? 'from-secondary to-[#059669]' : 'from-primary to-[#1d4ed8]'} transition-transform duration-500 group-hover:scale-105`}></div>
           <div className={`absolute inset-0 ${isTriggered ? '' : 'shadow-[0_0_40px_rgba(59,130,246,0.3)]'}`}></div>

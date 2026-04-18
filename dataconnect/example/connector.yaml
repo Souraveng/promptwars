@@ -1,9 +1,3 @@
 connectorId: example
-generate:
-  javascriptSdk:
-    - outputDir: C:\Users\Asus\AppData\Local\Programs\Antigravity\resources\app\src\dataconnect-generated
-      package: "@dataconnect/generated"
-      packageJsonDir: C:\Users\Asus\AppData\Local\Programs\Antigravity\resources\app
-      react: true
-      angular: false
-      clientCache: {}
+# Removed problematic automatic generation that was pointing to incorrect absolute paths.
+# We are currently using the dynamic Data Connect SDK (mutationRef/executeQuery).

@@ -1,5 +1,7 @@
 {
-  "projects": {},
+  "projects": {
+    "default": "promptwar-492818"
+  },
   "targets": {},
   "etags": {}
 }

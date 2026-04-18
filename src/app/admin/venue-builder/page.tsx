@@ -224,7 +224,7 @@ export default function VenueBuilderPage() {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <button onClick={() => setSaved(true) as unknown as void || setTimeout(() => setSaved(false), 2000)}
+              <button onClick={() => { setSaved(true); setTimeout(() => setSaved(false), 2000); }}
                 className={`px-3 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all border ${saved ? 'bg-secondary/10 text-secondary border-secondary/30' : 'text-primary border-primary/20 hover:bg-primary/5'}`}>
                 {saved ? '✓ Saved' : 'Save Changes'}
               </button>

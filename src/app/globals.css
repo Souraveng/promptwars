@@ -98,6 +98,33 @@
     box-shadow: 0 0 10px rgba(244, 63, 94, 0.8);
     animation: scan 4s linear infinite;
   }
+
+  /* Google Maps New Places Autocomplete Tactical Styles */
+  gmpx-place-autocomplete {
+    width: 100%;
+    --gmpx-font-family: var(--font-body);
+    --gmpx-color-surface: var(--color-surface-container-lowest);
+    --gmpx-color-on-surface: var(--color-on-surface);
+    --gmpx-color-outline: var(--color-outline-variant);
+    --gmpx-border-radius: 8px;
+  }
+
+  gmpx-place-autocomplete input {
+    background-color: var(--color-surface-container-lowest) !important;
+    color: var(--color-on-surface) !important;
+    border: 1px solid rgba(69, 70, 77, 0.3) !important;
+    border-radius: 8px !important;
+    padding: 10px 16px !important;
+    font-size: 14px !important;
+    width: 100% !important;
+    transition: all 0.2s ease !important;
+  }
+
+  gmpx-place-autocomplete input:focus {
+    border-color: rgba(188, 199, 222, 0.5) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(188, 199, 222, 0.1) !important;
+  }
 }
 
 @keyframes scan {
