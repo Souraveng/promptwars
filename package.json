@@ -12,6 +12,7 @@
     "@react-google-maps/api": "^2.20.8",
     "firebase": "^12.12.0",
     "firebase-admin": "^13.8.0",
+    "html2canvas": "^1.4.1",
     "html5-qrcode": "^2.3.8",
     "next": "16.2.4",
     "qrcode.react": "^4.2.0",

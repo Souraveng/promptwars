@@ -64,14 +64,14 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 
       // Convert prediction to a real Place object
       const place = await placePrediction.toPlace();
-      
+
       // Fetch the specific fields required for tactical pinning
       await place.fetchFields({ fields: ['location', 'displayName', 'formattedAddress'] });
-      
+
       if (place.location) {
         const newLat = place.location.lat();
         const newLng = place.location.lng();
-        
+
         setFormData(prev => ({
           ...prev,
           lat: newLat,
@@ -91,7 +91,7 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
       searchInputContainer.innerHTML = ''; // Clear any existing
       searchInputContainer.appendChild(autocompleteElement);
       autocompleteElement.addEventListener('gmp-select', handlePlaceSelect);
-      
+
       // Styling the web component to match tactical UI
       autocompleteElement.classList.add('tactical-search');
     }
@@ -105,7 +105,7 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     e.preventDefault();
     setLoading(true);
     console.log('[TacticalOS] Attempting to create event:', formData);
-    
+
     try {
       const mRef = mutationRef(dataconnect, 'CreateEvent', {
         title: formData.title,
@@ -115,10 +115,10 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
         description: formData.description,
         isActive: formData.isActive
       });
-      
+
       const result = await executeMutation(mRef);
       console.log('[TacticalOS] Mutation result:', result);
-      
+
       onCreated();
       onClose();
     } catch (err: any) {
@@ -169,8 +169,8 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
               </div>
 
               <div className="flex items-center gap-3 bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/20">
-                <input 
-                  type="checkbox" 
+                <input
+                  type="checkbox"
                   id="isActive"
                   checked={formData.isActive}
                   onChange={e => setFormData({ ...formData, isActive: e.target.checked })}
@@ -198,7 +198,7 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                       If suggestions don't appear, check API key restrictions in Google Console.
                     </p>
                   </div>
-                  
+
                   <div className="h-56 w-full rounded-2xl overflow-hidden border border-outline-variant/30 relative shadow-inner group">
                     <GoogleMap
                       mapContainerStyle={{ width: '100%', height: '100%' }}
@@ -210,15 +210,15 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                           setFormData({ ...formData, lat: e.latLng.lat(), lng: e.latLng.lng() });
                         }
                       }}
-                      options={{ 
-                        disableDefaultUI: true, 
+                      options={{
+                        disableDefaultUI: true,
                         mapId: MAP_ID,
                         gestureHandling: 'greedy'
                       }}
                     >
                       <AdvancedMarker map={map} position={{ lat: formData.lat, lng: formData.lng }} title={formData.venueName} />
                     </GoogleMap>
-                    
+
                     {/* Map Instructions Overlay */}
                     {formData.lat === -34.397 && (
                       <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center pointer-events-none group-hover:bg-black/20 transition-all">
@@ -296,7 +296,7 @@ export default function EventManagementPage() {
       const qRef = queryRef<ListEventsData, {}>(dataconnect, 'ListEvents', {});
       const result = await executeQuery(qRef);
       console.log('[TacticalOS] Fetch results:', result.data);
-      
+
       if (result.data?.events) {
         console.log(`[TacticalOS] Found ${result.data.events.length} events.`);
         setEvents(result.data.events);
@@ -336,7 +336,7 @@ export default function EventManagementPage() {
     <>
       {showModal && <NewEventModal onClose={() => setShowModal(false)} onCreated={fetchEvents} />}
 
-      <div className="flex flex-col gap-6 w-full p-6">
+      <div className="flex flex-col gap-4 w-full p-4 sm:p-6">
         <header className="flex justify-between items-end">
           <div>
             <h2 className="text-3xl font-headline font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-fixed-dim">Events Schedule</h2>
@@ -351,6 +351,24 @@ export default function EventManagementPage() {
           </button>
         </header>
 
+        {/* Filters & Search */}
+        <div className="flex flex-wrap lg:flex-nowrap gap-4 items-center bg-surface-container-low p-2 rounded-xl border border-outline-variant/10">
+          <div className="relative flex-1 min-w-0">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+            <input
+              className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-lg pl-10 pr-4 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-colors"
+              placeholder="Search events..."
+              type="text"
+            />
+          </div>
+          <div className="flex gap-2">
+            <button className="bg-surface-container-highest text-on-surface px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-bright transition-colors border border-outline-variant/10">All</button>
+            <button className="bg-surface-container text-on-surface-variant px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-container-high hover:text-on-surface transition-colors">Upcoming</button>
+            <button className="bg-surface-container text-on-surface-variant px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-container-high hover:text-on-surface transition-colors">Past</button>
+          </div>
+        </div>
+
+        {/* Event Cards */}
         <div className="flex flex-col gap-4">
           {loading ? (
             <div className="text-on-surface-variant text-center p-12">Loading Tactical Data...</div>
@@ -359,7 +377,7 @@ export default function EventManagementPage() {
               No tactical events scheduled.
             </div>
           ) : events.map((event) => (
-            <div 
+            <div
               key={event.id}
               className={`bg-surface-container p-5 rounded-xl border-l-4 relative overflow-hidden group hover:bg-surface-container-high transition-colors shadow-lg shadow-background/50 ${event.isActive ? 'border-l-secondary' : 'border-l-outline-variant'}`}
             >
@@ -372,7 +390,7 @@ export default function EventManagementPage() {
                         Active Monitoring
                       </div>
                     ) : (
-                      <button 
+                      <button
                         onClick={() => handleSetActive(event.id)}
                         className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[0.625rem] font-bold tracking-widest uppercase hover:bg-primary hover:text-on-primary transition-colors border border-primary/20"
                       >
@@ -386,13 +404,13 @@ export default function EventManagementPage() {
                     <span className="material-symbols-outlined text-xs">location_on</span> {event.venueName}
                   </p>
                 </div>
-                
+
                 <div className="text-right">
                   <p className="text-[10px] text-on-surface-variant uppercase tracking-tighter">Venue Location</p>
                   <p className="text-xs font-mono text-primary">{event.venueLat.toFixed(4)}, {event.venueLng.toFixed(4)}</p>
                 </div>
               </div>
-              
+
               <div className="flex gap-6 border-t border-outline-variant/10 mt-4 pt-4">
                 <div className="flex-1">
                   <p className="text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1">Description</p>

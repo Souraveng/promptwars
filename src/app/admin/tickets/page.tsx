@@ -41,22 +41,22 @@ export default function TicketManagementPage() {
   };
 
   return (
-    <div className="relative z-10 w-full h-full max-w-7xl mx-auto">
+    <div className="relative z-10 w-full max-w-7xl mx-auto p-4 sm:p-6">
       {/* Header section */}
-      <header className="flex justify-between items-end mb-8">
+      <header className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 mb-6">
         <div>
-          <h1 className="font-headline text-3xl font-bold text-primary tracking-tight mb-1">Ticket Operations</h1>
+          <h1 className="font-headline text-2xl sm:text-3xl font-bold text-primary tracking-tight mb-1">Ticket Operations</h1>
           <p className="text-on-surface-variant text-sm font-body">Sector 4 Node / Active Event: Cyber-Symphony Beta</p>
         </div>
         <div className="flex gap-3">
           <button className="bg-surface-container-low text-primary hover:bg-surface-container px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors border border-outline-variant/10">
-            <span className="material-symbols-outlined text-[18px]" data-icon="download">download</span>
+            <span className="material-symbols-outlined text-[18px]">download</span>
             Export Matrix
           </button>
         </div>
       </header>
       
-      <div className="grid grid-cols-12 gap-6 pb-12">
+      <div className="grid grid-cols-12 gap-4 pb-8">
         {/* Left Column: Metrics & History */}
         <div className="col-span-12 lg:col-span-7 xl:col-span-8 flex flex-col gap-6">
           {/* Metrics Bento Grid */}

@@ -2,11 +2,11 @@ import React from 'react';
 
 export default function AlertsPage() {
   return (
-    <div className="flex flex-col h-full bg-background relative max-w-7xl mx-auto z-10 w-full">
+    <div className="flex flex-col bg-background relative max-w-7xl mx-auto z-10 w-full p-4 sm:p-6">
       {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
         <div>
-          <h1 className="font-headline text-4xl lg:text-5xl font-bold tracking-tight text-on-surface mb-2">Broadcast Center</h1>
+          <h1 className="font-headline text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-on-surface mb-2">Broadcast Center</h1>
           <p className="text-sm text-on-surface-variant font-body">Manage emergency communications and venue-wide PWA updates.</p>
         </div>
         <div className="flex items-center gap-3">
@@ -18,7 +18,7 @@ export default function AlertsPage() {
       </div>
 
       {/* Bento Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 auto-rows-min pb-12">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 pb-8">
         {/* Left Column: Composer & Templates */}
         <div className="col-span-12 lg:col-span-7 flex flex-col gap-6">
           {/* Composer */}
