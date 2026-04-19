@@ -8,6 +8,8 @@ query ListEvents @auth(level: PUBLIC) {
     venueLng
     description
     startTime
+    expiryDate
+    bannerUrl
     isActive
     minAge
     layoutId
@@ -23,6 +25,8 @@ query GetActiveEvent @auth(level: PUBLIC) {
     venueName
     venueLat
     venueLng
+    expiryDate
+    bannerUrl
   }
 }
 

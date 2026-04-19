@@ -28,7 +28,10 @@ mutation CreateEvent(
   $isActive: Boolean = false,
   $minAge: Int = 0,
   $layoutId: UUID = null,
-  $layoutConfig: String = null
+  $layoutConfig: String = null,
+  $startTime: Timestamp = null,
+  $expiryDate: Timestamp = null,
+  $bannerUrl: String = null
 ) @auth(level: PUBLIC) {
   event_insert(data: {
     title: $title,
@@ -39,7 +42,10 @@ mutation CreateEvent(
     isActive: $isActive,
     minAge: $minAge,
     layoutId: $layoutId,
-    layoutConfig: $layoutConfig
+    layoutConfig: $layoutConfig,
+    startTime: $startTime,
+    expiryDate: $expiryDate,
+    bannerUrl: $bannerUrl
   })
 }
 

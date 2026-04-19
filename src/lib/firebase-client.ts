@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getDataConnect, connectDataConnectEmulator } from "firebase/data-connect";
+import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyDFNYR1SS6avIQz4eGP8PaFarGQEjbalXU",
@@ -19,6 +20,7 @@ export const DEFAULT_MAP_ID = '8e0a97af9386f9';
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 export const dataconnect = getDataConnect(app, {
   service: "promptwar",
   location: "us-central1",
@@ -31,4 +33,7 @@ if (isDev) {
   const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
   console.info(`[Firebase] Connecting to Data Connect Emulator at ${host}:9399`);
   connectDataConnectEmulator(dataconnect, host, 9399);
+  
+  console.info(`[Firebase] Connecting to Storage Emulator at ${host}:9199`);
+  connectStorageEmulator(storage, host, 9199);
 }

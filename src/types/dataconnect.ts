@@ -6,6 +6,8 @@ export interface Event {
   venueLng: number;
   description?: string;
   startTime: string;
+  expiryDate?: string;
+  bannerUrl?: string;
   isActive: boolean;
   minAge?: number;
   layoutId?: string | null;

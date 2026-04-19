@@ -1,9 +1,10 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { dataconnect, GOOGLE_MAPS_API_KEY, MAP_LIBRARIES, DEFAULT_MAP_ID } from '@/lib/firebase-client';
+import { dataconnect, GOOGLE_MAPS_API_KEY, MAP_LIBRARIES, DEFAULT_MAP_ID, storage } from '@/lib/firebase-client';
 import { executeMutation, executeQuery, mutationRef, queryRef } from 'firebase/data-connect';
 import { ListEventsData, Event, ListVenueLayoutsData, VenueLayout } from '@/types/dataconnect';
 import { GoogleMap, useJsApiLoader } from '@react-google-maps/api';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 const MAP_ID = DEFAULT_MAP_ID;
 
@@ -35,14 +36,19 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     title: '',
     venueName: '',
     description: '',
-    date: '',
-    time: '',
+    startDate: '',
+    startTime: '',
+    expiryDate: '',
+    expiryTime: '',
     lat: -34.397, // Default starting lat
     lng: 150.644, // Default starting lng
     isActive: false,
     layoutId: '',
     minAge: 0,
+    bannerUrl: '',
   });
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
   const [layouts, setLayouts] = useState<VenueLayout[]>([]);
   const [selectedLayout, setSelectedLayout] = useState<VenueLayout | null>(null);
   const [sectionCapacities, setSectionCapacities] = useState<Record<string, number>>({});
@@ -169,6 +175,25 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
     console.log('[TacticalOS] Attempting to create event:', formData);
 
     try {
+      let finalBannerUrl = formData.bannerUrl;
+
+      // Handle Image Upload
+      if (bannerFile) {
+        console.log('[TacticalOS] Uploading banner image...');
+        const storageRef = ref(storage, `event-banners/${Date.now()}-${bannerFile.name}`);
+        const snapshot = await uploadBytes(storageRef, bannerFile);
+        finalBannerUrl = await getDownloadURL(snapshot.ref);
+        console.log('[TacticalOS] Banner uploaded successfully:', finalBannerUrl);
+      }
+
+      const startTimestamp = (formData.startDate && formData.startTime)
+        ? new Date(`${formData.startDate}T${formData.startTime}`).toISOString()
+        : new Date().toISOString();
+
+      const expiryTimestamp = (formData.expiryDate && formData.expiryTime) 
+        ? new Date(`${formData.expiryDate}T${formData.expiryTime}`).toISOString()
+        : null;
+
       const mRef = mutationRef(dataconnect, 'CreateEvent', {
         title: formData.title,
         venueName: formData.venueName,
@@ -178,7 +203,10 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
         isActive: formData.isActive,
         minAge: formData.minAge,
         layoutId: formData.layoutId || null,
-        layoutConfig: JSON.stringify(sectionCapacities)
+        layoutConfig: JSON.stringify(sectionCapacities),
+        startTime: startTimestamp,
+        expiryDate: expiryTimestamp,
+        bannerUrl: finalBannerUrl
       });
 
       const result = await executeMutation(mRef);
@@ -243,7 +271,6 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                 />
                 <label htmlFor="isActive" className="text-sm font-medium text-on-surface">Set as Active Event</label>
               </div>
-
               <div>
                 <label className="block text-[0.6875rem] uppercase tracking-wider text-primary mb-2 font-semibold">Min. Age Requirement</label>
                 <select
@@ -257,6 +284,52 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
                   <option value={18}>18+ (Adult)</option>
                   <option value={21}>21+ (Restricted)</option>
                 </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[0.6875rem] uppercase tracking-wider text-primary mb-2 font-semibold">Start Date</label>
+                  <input
+                    required
+                    className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[0.6875rem] uppercase tracking-wider text-primary mb-2 font-semibold">Start Time</label>
+                  <input
+                    required
+                    className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50"
+                    type="time"
+                    value={formData.startTime}
+                    onChange={e => setFormData({ ...formData, startTime: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[0.6875rem] uppercase tracking-wider text-primary mb-2 font-semibold">Expiry Date</label>
+                  <input
+                    required
+                    className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50"
+                    type="date"
+                    value={formData.expiryDate}
+                    onChange={e => setFormData({ ...formData, expiryDate: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[0.6875rem] uppercase tracking-wider text-primary mb-2 font-semibold">Expiry Time</label>
+                  <input
+                    required
+                    className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50"
+                    type="time"
+                    value={formData.expiryTime}
+                    onChange={e => setFormData({ ...formData, expiryTime: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
 
@@ -385,6 +458,51 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
           </div>
 
           <div>
+            <label className="block text-[0.6875rem] uppercase tracking-wider text-primary mb-2 font-semibold">Banner Image</label>
+            <div className="flex flex-col gap-4 bg-surface-container-lowest/30 p-4 rounded-xl border border-outline-variant/10">
+              {bannerPreview ? (
+                <div className="relative group w-full aspect-video rounded-lg overflow-hidden border border-outline-variant/20 shadow-md bg-black/20">
+                  <img src={bannerPreview} alt="Banner Preview" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <button 
+                    type="button"
+                    onClick={() => { setBannerPreview(null); setBannerFile(null); }}
+                    className="absolute top-2 right-2 bg-black/50 hover:bg-black/80 text-white p-1.5 rounded-full backdrop-blur-sm transition-all shadow-lg"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                  </button>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none flex items-end p-4">
+                    <p className="text-[10px] text-white/80 font-medium tracking-wide">IMAGE READY FOR DEPLOYMENT</p>
+                  </div>
+                </div>
+              ) : (
+                <label className="w-full aspect-video border-2 border-dashed border-outline-variant/20 rounded-xl flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all group">
+                  <div className="w-12 h-12 rounded-full bg-surface-container-high flex items-center justify-center text-outline group-hover:text-primary transition-colors group-hover:scale-110 duration-300">
+                    <span className="material-symbols-outlined text-2xl">image</span>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-on-surface">Upload Banner Image</p>
+                    <p className="text-[10px] text-on-surface-variant font-mono mt-1 uppercase tracking-tighter opacity-60">PNG, JPG or WEBP • MAX 2MB</p>
+                  </div>
+                  <input 
+                    type="file" 
+                    className="hidden" 
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setBannerFile(file);
+                        const reader = new FileReader();
+                        reader.onloadend = () => setBannerPreview(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                </label>
+              )}
+            </div>
+          </div>
+
+          <div>
             <label className="block text-[0.6875rem] uppercase tracking-wider text-primary mb-2 font-semibold">Description</label>
             <textarea
               className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 py-3 text-sm text-on-surface resize-none leading-relaxed"
@@ -421,7 +539,10 @@ function NewEventModal({ onClose, onCreated }: { onClose: () => void; onCreated:
 export default function EventManagementPage() {
   const [showModal, setShowModal] = useState(false);
   const [events, setEvents] = useState<Event[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'active' | 'upcoming' | 'past'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchEvents = async () => {
     console.log('[TacticalOS] Fetching events list...');
@@ -446,6 +567,41 @@ export default function EventManagementPage() {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  useEffect(() => {
+    let result = [...events];
+
+    // Status Filter
+    const now = new Date();
+    if (filter === 'active') {
+      result = result.filter(e => {
+        const start = new Date(e.startTime);
+        const expiry = e.expiryDate ? new Date(e.expiryDate) : null;
+        return e.isActive || (start <= now && (!expiry || expiry >= now));
+      });
+    } else if (filter === 'upcoming') {
+      result = result.filter(e => {
+        const start = new Date(e.startTime);
+        return start > now && !e.isActive;
+      });
+    } else if (filter === 'past') {
+      result = result.filter(e => {
+        const expiry = e.expiryDate ? new Date(e.expiryDate) : null;
+        return expiry && expiry < now && !e.isActive;
+      });
+    }
+
+    // Search Filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(e => 
+        e.title.toLowerCase().includes(query) || 
+        e.venueName.toLowerCase().includes(query)
+      );
+    }
+
+    setFilteredEvents(result);
+  }, [events, filter, searchQuery]);
 
   useEffect(() => {
     const handler = () => setShowModal(true);
@@ -519,12 +675,35 @@ export default function EventManagementPage() {
               className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-lg pl-10 pr-4 py-2 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-colors"
               placeholder="Search events..."
               type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="flex gap-2">
-            <button className="bg-surface-container-highest text-on-surface px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-bright transition-colors border border-outline-variant/10">All</button>
-            <button className="bg-surface-container text-on-surface-variant px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-container-high hover:text-on-surface transition-colors">Upcoming</button>
-            <button className="bg-surface-container text-on-surface-variant px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-container-high hover:text-on-surface transition-colors">Past</button>
+            <button 
+              onClick={() => setFilter('all')}
+              className={`${filter === 'all' ? 'bg-surface-container-highest text-on-surface' : 'bg-surface-container text-on-surface-variant'} px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-bright transition-colors border border-outline-variant/10`}
+            >
+              All
+            </button>
+            <button 
+              onClick={() => setFilter('active')}
+              className={`${filter === 'active' ? 'bg-surface-container-highest text-on-surface' : 'bg-surface-container text-on-surface-variant'} px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-bright transition-colors border border-outline-variant/10`}
+            >
+              Active
+            </button>
+            <button 
+              onClick={() => setFilter('upcoming')}
+              className={`${filter === 'upcoming' ? 'bg-surface-container-highest text-on-surface' : 'bg-surface-container text-on-surface-variant'} px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-bright transition-colors border border-outline-variant/10`}
+            >
+              Upcoming
+            </button>
+            <button 
+              onClick={() => setFilter('past')}
+              className={`${filter === 'past' ? 'bg-surface-container-highest text-on-surface' : 'bg-surface-container text-on-surface-variant'} px-4 py-2 rounded-lg text-sm font-medium hover:bg-surface-bright transition-colors border border-outline-variant/10`}
+            >
+              Past
+            </button>
           </div>
         </div>
 
@@ -532,15 +711,58 @@ export default function EventManagementPage() {
         <div className="flex flex-col gap-4">
           {loading ? (
             <div className="text-on-surface-variant text-center p-12">Loading Tactical Data...</div>
-          ) : events.length === 0 ? (
+          ) : filteredEvents.length === 0 ? (
             <div className="text-on-surface-variant text-center p-12 bg-surface-container rounded-2xl border border-dashed border-outline-variant/30">
-              No tactical events scheduled.
+              No tactical events found for this filter.
             </div>
-          ) : events.map((event) => (
+          ) : filteredEvents.map((event) => (
             <div
               key={event.id}
-              className={`bg-surface-container p-5 rounded-xl border-l-4 relative overflow-hidden group hover:bg-surface-container-high transition-colors shadow-lg shadow-background/50 ${event.isActive ? 'border-l-secondary' : 'border-l-outline-variant'}`}
+              className={`bg-surface-container rounded-xl border border-outline-variant/10 relative overflow-hidden group hover:bg-surface-container-high transition-colors shadow-lg shadow-background/50 flex flex-col md:flex-row`}
             >
+              {/* Banner Image / Default */}
+              <div className="w-full md:w-48 h-40 md:h-auto relative bg-surface-container-highest overflow-hidden shrink-0">
+                {event.bannerUrl ? (
+                  <img src={event.bannerUrl} alt={event.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-surface-container-highest to-surface-container opacity-40">
+                    <span className="material-symbols-outlined text-4xl text-primary">event</span>
+                  </div>
+                )}
+                
+                {/* Dynamic Status Overlay */}
+                {(() => {
+                  const now = new Date();
+                  const start = new Date(event.startTime);
+                  const expiry = event.expiryDate ? new Date(event.expiryDate) : null;
+                  
+                  if (event.isActive || (start <= now && (!expiry || expiry >= now))) {
+                    return (
+                      <div className="absolute top-2 left-2 bg-secondary text-on-secondary text-[8px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-lg ring-1 ring-white/20">
+                        <div className="w-1 h-1 rounded-full bg-on-secondary animate-pulse"></div>
+                        ACTIVE MONITORING
+                      </div>
+                    );
+                  } else if (start > now) {
+                    return (
+                      <div className="absolute top-2 left-2 bg-primary/80 backdrop-blur-md text-on-primary text-[8px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-lg border border-white/10">
+                        <span className="material-symbols-outlined text-[10px]">schedule</span>
+                        SCHEDULED
+                      </div>
+                    );
+                  } else if (expiry && expiry < now) {
+                    return (
+                      <div className="absolute top-2 left-2 bg-surface-container-highest/90 backdrop-blur-md text-on-surface-variant text-[8px] font-bold px-1.5 py-0.5 rounded flex items-center gap-1 shadow-lg border border-outline-variant/20">
+                        <span className="material-symbols-outlined text-[10px]">history</span>
+                        EXPIRED
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+              </div>
+
+              <div className="flex-1 p-5 border-l border-outline-variant/5">
               <div className="flex justify-between items-start">
                 <div className="flex flex-col gap-1">
                   <div className="flex gap-3 items-center mb-1">
@@ -591,13 +813,28 @@ export default function EventManagementPage() {
                     <p className="text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1">Min Age</p>
                     <p className="text-sm font-bold text-primary">{event.minAge ? `${event.minAge}+` : 'All Ages'}</p>
                   </div>
-                  <div className="text-center">
-                    <p className="text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1">Capacity</p>
-                    <p className="text-sm font-bold text-secondary">
-                      {event.layoutConfig 
-                        ? Object.values(JSON.parse(event.layoutConfig) as Record<string, number>).reduce((a, b) => a + b, 0)
-                        : 0}
-                    </p>
+                    <div className="text-center">
+                      <p className="text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1">Schedule</p>
+                      <p className="text-[11px] font-mono font-bold text-on-surface">
+                        {new Date(event.startTime).toLocaleDateString()}
+                        <span className="mx-1 text-primary-fixed-dim opacity-50">→</span>
+                        {event.expiryDate ? new Date(event.expiryDate).toLocaleDateString() : 'OPEN'}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1">Capacity</p>
+                      <p className="text-sm font-bold text-secondary">
+                        {event.layoutConfig 
+                          ? Object.values(JSON.parse(event.layoutConfig) as Record<string, number>).reduce((a, b) => a + b, 0)
+                          : 0}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1">Expiry</p>
+                      <p className="text-sm font-mono font-bold text-error/80">
+                        {event.expiryDate ? new Date(event.expiryDate).toLocaleDateString() : 'N/A'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

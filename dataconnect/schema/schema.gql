@@ -13,6 +13,8 @@ type Event @table {
   venueLng: Float!
   description: String
   startTime: Timestamp! @default(expr: "request.time")
+  expiryDate: Timestamp
+  bannerUrl: String
   isActive: Boolean! @default(value: false)
   minAge: Int @default(value: 0)
   layoutId: UUID
