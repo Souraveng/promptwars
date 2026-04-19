@@ -1,11 +1,42 @@
 'use client';
-import React from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { mockData } from '@/lib/mock-data';
 
+interface TicketInfo {
+  eventName: string;
+  gate: string;
+  section: string;
+  row: string;
+  seat: string;
+  guestName: string;
+}
+
 export default function GuestDashboardPage() {
-  const { user, currentEvent, crowd } = mockData;
   const router = useRouter();
+  const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ticket_data');
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data.guestName || data.gate) setTicketInfo(data);
+      }
+    } catch {}
+  }, []);
+
+  // Merge: real ticket data takes priority over mock
+  const eventName = ticketInfo?.eventName || mockData.currentEvent.name;
+  const gate      = ticketInfo?.gate      || mockData.currentEvent.location.gate;
+  const section   = ticketInfo?.section   || mockData.currentEvent.location.section;
+  const row       = ticketInfo?.row       || mockData.currentEvent.location.row;
+  const seat      = ticketInfo?.seat      || mockData.currentEvent.location.seat;
+  const guestName = ticketInfo?.guestName
+    ? ticketInfo.guestName.split(' ')[0]
+    : `${mockData.user.firstName} ${mockData.user.lastName}`;
+
+  const { crowd } = mockData;
 
   const quickActions = [
     { icon: 'confirmation_number', label: 'Ticket',   href: '/guest/tickets'  },
@@ -19,11 +50,11 @@ export default function GuestDashboardPage() {
   return (
     <main className="px-4 py-6 max-w-7xl mx-auto">
 
-      {/* ── Header row ── */}
+      {/* Header */}
       <section className="flex justify-between items-center mb-6">
         <div>
           <p className="font-label text-[10px] uppercase tracking-[0.05em] text-primary mb-1">Welcome Back</p>
-          <h2 className="font-headline text-2xl md:text-3xl font-bold">{user.firstName} {user.lastName}</h2>
+          <h2 className="font-headline text-2xl md:text-3xl font-bold">{guestName}</h2>
         </div>
         <button
           onClick={() => router.push('/guest/sos')}
@@ -34,10 +65,9 @@ export default function GuestDashboardPage() {
         </button>
       </section>
 
-      {/* ── Desktop: two-column, Mobile: single column ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {/* Left column — event card + crowd */}
+        {/* Left column */}
         <div className="lg:col-span-2 flex flex-col gap-6">
 
           {/* Event Card */}
@@ -48,18 +78,18 @@ export default function GuestDashboardPage() {
                 <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
                 Live Now
               </span>
-              <h3 className="font-headline text-2xl md:text-3xl font-bold text-on-surface leading-tight mb-2">{currentEvent.name}</h3>
+              <h3 className="font-headline text-2xl md:text-3xl font-bold text-on-surface leading-tight mb-2">{eventName}</h3>
               <p className="text-on-surface-variant text-sm flex items-center gap-2 font-body mb-6">
                 <span className="material-symbols-outlined text-[16px]">calendar_today</span>
-                {currentEvent.date} • {currentEvent.time}
+                {mockData.currentEvent.date} • {mockData.currentEvent.time}
               </p>
 
               <div className="grid grid-cols-4 gap-3 bg-surface-container rounded-xl p-4 border border-outline-variant/10">
                 {[
-                  { label: 'Gate', value: currentEvent.location.gate },
-                  { label: 'Sec',  value: currentEvent.location.section },
-                  { label: 'Row',  value: currentEvent.location.row },
-                  { label: 'Seat', value: currentEvent.location.seat },
+                  { label: 'Gate',    value: gate    },
+                  { label: 'Section', value: section },
+                  { label: 'Row',     value: row     },
+                  { label: 'Seat',    value: seat    },
                 ].map(({ label, value }) => (
                   <div key={label} className="text-center">
                     <p className="font-label text-[10px] uppercase tracking-[0.05em] text-on-surface-variant mb-1">{label}</p>
@@ -99,22 +129,16 @@ export default function GuestDashboardPage() {
           <h3 className="font-label text-[10px] uppercase tracking-[0.05em] text-on-surface-variant">Quick Actions</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3">
             {quickActions.map(({ icon, label, href }) => (
-              <button
-                key={label}
-                onClick={() => router.push(href)}
-                className="bg-surface-container-low hover:bg-surface-container active:scale-95 transition-all rounded-xl p-5 flex flex-col items-center justify-center gap-3 border border-outline-variant/15 group cursor-pointer"
-              >
+              <button key={label} onClick={() => router.push(href)}
+                className="bg-surface-container-low hover:bg-surface-container active:scale-95 transition-all rounded-xl p-5 flex flex-col items-center justify-center gap-3 border border-outline-variant/15 group cursor-pointer">
                 <span className="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">{icon}</span>
                 <span className="font-label text-[10px] uppercase tracking-[0.05em] text-on-surface-variant group-hover:text-primary transition-colors">{label}</span>
               </button>
             ))}
           </div>
 
-          {/* SOS card on desktop */}
-          <button
-            onClick={() => router.push('/guest/sos')}
-            className="hidden lg:flex w-full bg-error-container/20 hover:bg-error-container/40 border border-error/20 rounded-2xl p-5 items-center gap-4 transition-all group"
-          >
+          <button onClick={() => router.push('/guest/sos')}
+            className="hidden lg:flex w-full bg-error-container/20 hover:bg-error-container/40 border border-error/20 rounded-2xl p-5 items-center gap-4 transition-all group">
             <span className="material-symbols-outlined text-error text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>emergency</span>
             <div className="text-left">
               <p className="font-headline text-sm font-bold text-error">Emergency SOS</p>

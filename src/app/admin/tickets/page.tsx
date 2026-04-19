@@ -87,7 +87,8 @@ export default function TicketManagementPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...guestData,
-          eventId: selectedEventId
+          eventId: selectedEventId,
+          eventName: selectedEvent?.title ?? ''
         })
       });
       
@@ -464,14 +465,39 @@ export default function TicketManagementPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 pt-4 no-print">
+                  <div className="grid grid-cols-3 gap-3 pt-4 no-print">
                     <button type="button" onClick={handlePrint} className="flex flex-col items-center gap-2 p-3 bg-primary group hover:bg-primary/90 rounded-xl text-on-primary transition-all shadow-lg">
                       <span className="material-symbols-outlined">print</span>
-                      <span className="text-[10px] font-bold uppercase tracking-widest">Print Physical Pass</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest">Print Pass</span>
                     </button>
                     <button type="button" onClick={handleEmailDemo} className="flex flex-col items-center gap-2 p-3 bg-surface-container-highest hover:bg-surface-bright border border-outline-variant/20 rounded-xl text-on-surface transition-all">
                       <span className="material-symbols-outlined">mail</span>
-                      <span className="text-[10px] font-bold uppercase tracking-widest">Send Digital Copy</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest">Send Copy</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Find the canvas element inside the QR container and download it directly
+                        const canvas = document.querySelector('.print-ticket canvas') as HTMLCanvasElement;
+                        if (!canvas) return;
+                        // Create a clean white-background QR PNG
+                        const offscreen = document.createElement('canvas');
+                        const pad = 20;
+                        offscreen.width = canvas.width + pad * 2;
+                        offscreen.height = canvas.height + pad * 2;
+                        const ctx = offscreen.getContext('2d')!;
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(0, 0, offscreen.width, offscreen.height);
+                        ctx.drawImage(canvas, pad, pad);
+                        const a = document.createElement('a');
+                        a.href = offscreen.toDataURL('image/png');
+                        a.download = `qr-${generatedTicket?.id?.slice(0,8) ?? 'ticket'}.png`;
+                        a.click();
+                      }}
+                      className="flex flex-col items-center gap-2 p-3 bg-secondary/10 hover:bg-secondary/20 border border-secondary/20 rounded-xl text-secondary transition-all"
+                    >
+                      <span className="material-symbols-outlined">qr_code</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest">Save QR</span>
                     </button>
                   </div>
                   

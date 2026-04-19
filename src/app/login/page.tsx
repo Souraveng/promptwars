@@ -42,6 +42,11 @@ export default function LoginPage() {
 
   return (
     <div className="bg-background text-on-background font-body min-h-screen flex flex-col justify-center items-center relative overflow-hidden selection:bg-primary selection:text-on-primary">
+      {/* Back button */}
+      <button onClick={() => router.push('/')} className="absolute top-5 left-5 z-20 flex items-center gap-1 text-on-surface-variant/60 hover:text-primary transition-colors text-sm font-medium">
+        <span className="material-symbols-outlined text-base">arrow_back</span>
+        Back
+      </button>
       {/* Asymmetric Ambient Background Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary-container/40 blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-surface-container-highest/30 blur-[150px] pointer-events-none"></div>

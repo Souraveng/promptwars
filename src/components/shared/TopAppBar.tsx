@@ -20,7 +20,7 @@ export default function TopAppBar() {
   const handleSignOut = async () => {
     setOpen(false);
     await signOut(auth);
-    router.push('/');
+    router.push('/guest/scan');
   };
 
   return (
@@ -60,15 +60,6 @@ export default function TopAppBar() {
           {open && (
             <div className="absolute right-0 top-12 w-44 rounded-xl shadow-2xl overflow-hidden z-[100]"
               style={{ background: '#171f33', border: '1px solid rgba(69,70,77,0.4)' }}>
-              <button
-                onClick={() => { setOpen(false); router.push('/'); }}
-                className="flex items-center gap-3 px-4 py-3 w-full text-left transition-colors hover:bg-white/5"
-                style={{ color: '#bcc7de', fontSize: '13px' }}
-              >
-                <span className="material-symbols-outlined text-sm">home</span>
-                Landing Page
-              </button>
-              <div style={{ borderTop: '1px solid rgba(69,70,77,0.3)' }} />
               <button
                 onClick={handleSignOut}
                 className="flex items-center gap-3 px-4 py-3 w-full text-left transition-colors hover:bg-red-500/10"
