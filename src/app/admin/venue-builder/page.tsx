@@ -36,9 +36,20 @@ const COLORS = ['#4edea3', '#bcc7de', '#ffb2b7', '#ee3a5a', '#6fcfff', '#f9c74f'
 
 /* ── Add Element Modal ── */
 function AddElementModal({ type, onConfirm, onClose }: {
-  type: ElementType; onConfirm: (l: string) => void; onClose: () => void;
+  type: ElementType;
+  onConfirm: (label: string, capacity?: number) => void;
+  onClose: () => void;
 }) {
   const [label, setLabel] = useState(CFG[type].defaultLabel);
+  const [capacity, setCapacity] = useState(100);
+
+  const showCapacity = type === 'zone' || type === 'stall';
+
+  const handleConfirm = () => {
+    onConfirm(label, showCapacity ? capacity : undefined);
+    onClose();
+  };
+
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
@@ -50,12 +61,30 @@ function AddElementModal({ type, onConfirm, onClose }: {
         <div>
           <label className="block text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1.5 font-semibold">Label</label>
           <input autoFocus value={label} onChange={e => setLabel(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && (onConfirm(label), onClose())}
-            className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-colors opacity-100" />
+            onKeyDown={e => e.key === 'Enter' && handleConfirm()}
+            className="w-full bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-colors" />
         </div>
+        {showCapacity && (
+          <div>
+            <label className="block text-[0.6875rem] uppercase tracking-wider text-on-surface-variant mb-1.5 font-semibold">
+              Capacity <span className="text-secondary normal-case tracking-normal font-normal">(max persons)</span>
+            </label>
+            <div className="flex items-center gap-3">
+              <input
+                type="number" min={1} value={capacity}
+                onChange={e => setCapacity(Math.max(1, Number(e.target.value)))}
+                className="flex-1 bg-surface-container-lowest border border-outline-variant/20 rounded-xl px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:border-primary/50 transition-colors"
+              />
+              <div className="flex flex-col items-center px-3 py-2 bg-secondary/10 border border-secondary/20 rounded-xl">
+                <span className="text-lg font-bold text-secondary">{capacity.toLocaleString()}</span>
+                <span className="text-[9px] uppercase tracking-wider text-on-surface-variant">persons</span>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="flex gap-3">
           <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-medium border border-outline-variant/20 text-on-surface-variant hover:bg-surface-container transition-colors">Cancel</button>
-          <button onClick={() => { onConfirm(label); onClose(); }} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-primary text-on-primary hover:bg-primary-fixed transition-colors">Add to Canvas</button>
+          <button onClick={handleConfirm} className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-primary text-on-primary hover:bg-primary-fixed transition-colors">Add to Canvas</button>
         </div>
       </div>
     </div>
@@ -106,17 +135,17 @@ interface CanvasElProps {
   selectedIds: string[];
   onUpdate: (id: string, patch: Partial<CanvasElement>) => void;
   onUpdateBulk: (ids: string[], dx: number, dy: number) => void;
+  onDragStart: () => void; // called when drag begins so parent can snapshot positions
   onSelect: (id: string, multi?: boolean) => void;
   onDelete: (id: string) => void;
   isEraserMode?: boolean;
-  isPointerDown?: boolean;
   recordAction: () => void;
 }
 
-const CanvasEl: React.FC<CanvasElProps> = ({ el, selected, selectedIds, onUpdate, onUpdateBulk, onSelect, onDelete, isEraserMode, isPointerDown, recordAction }) => {
+const CanvasEl: React.FC<CanvasElProps> = ({ el, selected, selectedIds, onUpdate, onUpdateBulk, onDragStart, onSelect, onDelete, isEraserMode, recordAction }) => {
   const [isDragging, setIsDragging] = useState(false);
   const canvasRef = useRef<HTMLElement | null>(null);
-  const dragStart = useRef<{ px: number; py: number; ex: number; ey: number } | null>(null);
+  const dragStart = useRef<{ px: number; py: number } | null>(null);
   const resizeStart = useRef<{ px: number; py: number; ew: number; eh: number; corner: string } | null>(null);
   const rotateStart = useRef<{ cx: number; cy: number; startAngle: number } | null>(null);
 
@@ -134,10 +163,12 @@ const CanvasEl: React.FC<CanvasElProps> = ({ el, selected, selectedIds, onUpdate
 
   const onDragDown = (e: React.PointerEvent) => {
     if (isEraserMode || e.button === 1) return;
+    e.stopPropagation();
     if (!selectedIds.includes(el.id)) onSelect(el.id, e.shiftKey);
     recordAction();
+    onDragStart(); // snapshot all selected positions in parent
     canvasRef.current = getCanvas(e.currentTarget as HTMLElement);
-    dragStart.current = { px: e.clientX, py: e.clientY, ex: el.x, ey: el.y };
+    dragStart.current = { px: e.clientX, py: e.clientY };
     setIsDragging(true);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
@@ -147,8 +178,11 @@ const CanvasEl: React.FC<CanvasElProps> = ({ el, selected, selectedIds, onUpdate
     const rect = canvasRef.current.getBoundingClientRect();
     const dx = ((e.clientX - dragStart.current.px) / rect.width) * 100;
     const dy = ((e.clientY - dragStart.current.py) / rect.height) * 100;
-    if (selectedIds.length > 1 && selectedIds.includes(el.id)) onUpdateBulk(selectedIds, dx, dy);
-    else onUpdate(el.id, { x: dragStart.current.ex + dx, y: dragStart.current.ey + dy });
+    if (selectedIds.length > 1 && selectedIds.includes(el.id)) {
+      onUpdateBulk(selectedIds, dx, dy);
+    } else {
+      onUpdateBulk([el.id], dx, dy);
+    }
   };
 
   const onResizeDown = (e: React.PointerEvent, corner: string) => {
@@ -193,7 +227,14 @@ const CanvasEl: React.FC<CanvasElProps> = ({ el, selected, selectedIds, onUpdate
       style={{ left: `${el.x}%`, top: `${el.y}%`, width: `${el.w}%`, height: `${el.h}%`, transform: `rotate(${el.rotation ?? 0}deg)`, transformOrigin: 'center center', opacity: el.opacity / 100 }}
       onClick={handleClick} onPointerDown={onDragDown} 
       onPointerMove={e => { onDragMove(e); if (resizeStart.current) onResizeMove(e); if (rotateStart.current) onRotateMove(e); }}
-      onPointerUp={e => { (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId); setIsDragging(false); resizeStart.current = null; rotateStart.current = null; }}>
+      onPointerUp={e => {
+        e.stopPropagation();
+        (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+        setIsDragging(false);
+        dragStart.current = null;
+        resizeStart.current = null;
+        rotateStart.current = null;
+      }}>
       <div className={`w-full h-full rounded-xl flex items-center justify-center transition-all overflow-hidden border ${selected ? 'border-[#0066FF] shadow-[0_0_0_1px_#0066FF]' : 'border-outline-variant/20'}`}
         style={{ backgroundColor: selected ? el.color + '33' : el.color + '15' }}>
         {el.type === 'seat' ? <div className="w-[60%] h-[60%] border rounded-sm" style={{ borderColor: el.color }} /> : <span className="text-[10px] uppercase font-bold px-2 text-center" style={{ color: el.color }}>{el.label}</span>}
@@ -222,6 +263,11 @@ export default function VenueBuilderPage() {
   const [panMode, setPanMode] = useState(false);
   const [isEraserMode, setIsEraserMode] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [canvasBg, setCanvasBg] = useState('#0a0c10');
+  const [showBgPicker, setShowBgPicker] = useState(false);
+  const [canvasBgImage, setCanvasBgImage] = useState<string>('');
+  const bgImageInputRef = useRef<HTMLInputElement>(null);
+  const [toolMenuOpen, setToolMenuOpen] = useState(false);
   const [selectionRect, setSelectionRect] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   const [addModal, setAddModal] = useState<ElementType | null>(null);
   const [gridModal, setGridModal] = useState(false);
@@ -260,11 +306,24 @@ export default function VenueBuilderPage() {
     setElements(prev => prev.map(e => e.id === id ? { ...e, ...patch } : e));
   }, []);
 
+  const handleDragStart = useCallback(() => {
+    // Snapshot current positions of ALL elements so bulk move uses absolute offsets
+    setElements(current => {
+      dragInitialElements.current = JSON.parse(JSON.stringify(current));
+      return current;
+    });
+  }, []);
+
   const handleUpdateBulk = useCallback((ids: string[], dx: number, dy: number) => {
-    if (dragInitialElements.current.length === 0) dragInitialElements.current = JSON.parse(JSON.stringify(elements));
-    setElements(prev => prev.map(e => ids.includes(e.id) ? { ...e, x: e.x + dx, y: e.y + dy } : e));
-    dragInitialElements.current = []; // Reset after apply
-  }, [elements]);
+    // dragInitialElements is populated by onDragStart before first move
+    if (dragInitialElements.current.length === 0) return;
+    setElements(prev => prev.map(e => {
+      if (!ids.includes(e.id)) return e;
+      const initial = dragInitialElements.current.find(i => i.id === e.id);
+      if (!initial) return e;
+      return { ...e, x: initial.x + dx, y: initial.y + dy };
+    }));
+  }, []);
 
   const handleDelete = useCallback((id: string) => {
     recordAction();
@@ -284,10 +343,10 @@ export default function VenueBuilderPage() {
     setTimeout(() => setIsAiProcessing(false), 2000);
   };
 
-  const handleAdd = (type: ElementType, label: string) => {
+  const handleAdd = (type: ElementType, label: string, capacity?: number) => {
     recordAction();
     const id = Date.now().toString();
-    setElements(prev => [...prev, { id, type, label, x: 40, y: 40, w: 15, h: 10, color: COLORS[Math.floor(Math.random() * COLORS.length)], opacity: 100, rotation: 0, access: 'public', capacity: 100 }]);
+    setElements(prev => [...prev, { id, type, label, x: 40, y: 40, w: 15, h: 10, color: COLORS[Math.floor(Math.random() * COLORS.length)], opacity: 100, rotation: 0, access: 'public', capacity: capacity ?? 100 }]);
     setSelectedIds([id]);
   };
 
@@ -346,6 +405,8 @@ export default function VenueBuilderPage() {
   }, []);
 
   const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    setShowBgPicker(false);
+    setToolMenuOpen(false);
     if (panMode || e.button === 1) {
       (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
       return;
@@ -367,6 +428,7 @@ export default function VenueBuilderPage() {
   };
 
   const handleCanvasPointerUp = (e: React.PointerEvent) => {
+    dragInitialElements.current = []; // reset bulk drag state
     if (selectionRect && canvasWrapRef.current) {
       const rect = canvasWrapRef.current.getBoundingClientRect();
       const getX = (cx: number) => ((cx - rect.left) / rect.width) * 100;
@@ -394,100 +456,194 @@ export default function VenueBuilderPage() {
   const selectedEl = useMemo(() => elements.find(e => e.id === selectedIds[0]), [elements, selectedIds]);
 
   return (
-    <div className={`relative w-full h-full bg-[#0a0c10] flex overflow-hidden text-on-surface font-sans transition-all duration-500 ${isFullscreen ? 'fixed inset-0 z-[9999]' : ''}`}>
-      {/* Background Dots */}
-      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" 
-        style={{ 
-          backgroundImage: 'radial-gradient(circle, #4edea3 1px, transparent 1px)', 
-          backgroundSize: `${40 * zoom}px ${40 * zoom}px`, 
-          backgroundPosition: `${panOffset.x}px ${panOffset.y}px` 
-        }} />
+    <div className={`relative w-full h-full flex overflow-hidden text-on-surface font-sans transition-all duration-500 ${isFullscreen ? 'fixed inset-0 z-[9999]' : ''}`}>
 
-      <main className="flex-1 relative flex flex-col overflow-hidden">
-        {/* Top Bar */}
-        <div className="absolute top-6 left-6 right-6 z-50 flex items-center justify-between pointer-events-none">
-          <div className="flex items-center gap-3 bg-surface-container/60 backdrop-blur-xl border border-outline-variant/10 px-4 py-2 rounded-2xl shadow-2xl pointer-events-auto">
-            <span className="material-symbols-outlined text-primary">stadium</span>
-            <input value={layoutName} onChange={e => setLayoutName(e.target.value)} className="bg-transparent border-none font-bold text-sm outline-none w-48" />
-            <div className="h-4 w-px bg-outline-variant/20 mx-2" />
-            <button onClick={undo} className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors text-lg" title="Undo">undo</button>
-            <button onClick={redo} className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors text-lg" title="Redo">redo</button>
-            <div className="h-4 w-px bg-outline-variant/20 mx-2" />
-            <button onClick={handleFetchLayouts} className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors text-lg" title="Load Project">folder_open</button>
-            <button onClick={toggleFullscreen} className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors text-lg" title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}>
+      <main className="flex-1 relative flex flex-col overflow-hidden bg-[#1a1d24]">
+        {/* Workspace dot pattern */}
+        <div className="absolute inset-0 z-0 pointer-events-none"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(78,222,163,0.15) 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+          }} />
+
+        {/* ── Sticky Toolbar ── */}
+        <div className="relative z-10 flex items-center justify-between px-4 py-2 bg-[#0d1117]/95 backdrop-blur-md border-b border-white/5 shrink-0 gap-2 flex-wrap">
+          {/* Left: layout name + history */}
+          <div className="flex items-center gap-1">
+            <span className="material-symbols-outlined text-primary text-lg mr-1">stadium</span>
+            <input
+              value={layoutName}
+              onChange={e => setLayoutName(e.target.value)}
+              className="bg-transparent border-none font-bold text-sm outline-none w-40 text-on-surface"
+            />
+            <div className="h-5 w-px bg-white/10 mx-2" />
+            <button onClick={undo} title="Undo (Ctrl+Z)"
+              className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-white/5 text-lg">undo</button>
+            <button onClick={redo} title="Redo (Ctrl+Y)"
+              className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-white/5 text-lg">redo</button>
+            <div className="h-5 w-px bg-white/10 mx-2" />
+            <button onClick={handleFetchLayouts} title="Load Project"
+              className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-white/5 text-lg">folder_open</button>
+            <button onClick={toggleFullscreen} title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+              className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-white/5 text-lg">
               {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
             </button>
           </div>
-          <button className="bg-primary text-on-primary px-6 py-2 rounded-2xl font-bold text-sm shadow-lg pointer-events-auto hover:brightness-110 active:scale-95 transition-all">Save Changes</button>
+
+          {/* Center: quick tool shortcuts */}
+          <div className="flex items-center gap-1">
+            <button onClick={() => setPanMode(!panMode)} title="Pan (Space)"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${panMode ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:bg-white/5'}`}>
+              <span className="material-symbols-outlined text-sm">pan_tool</span>Pan
+            </button>
+            <div className="h-5 w-px bg-white/10 mx-1" />
+            {(Object.keys(CFG) as ElementType[]).filter(t => t !== 'polygon' && t !== 'seat').map(type => (
+              <button key={type} onClick={() => setAddModal(type)} title={`Add ${type}`}
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-on-surface-variant hover:bg-white/5 hover:text-primary transition-all">
+                <span className="material-symbols-outlined text-sm text-primary">{CFG[type].icon}</span>
+                <span className="hidden lg:inline">{type}</span>
+              </button>
+            ))}
+            <div className="h-5 w-px bg-white/10 mx-1" />
+            <button onClick={() => setIsEraserMode(!isEraserMode)} title="Eraser"
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${isEraserMode ? 'bg-error text-white' : 'text-on-surface-variant hover:bg-white/5'}`}>
+              <span className="material-symbols-outlined text-sm">auto_fix_off</span>
+              <span className="hidden lg:inline">Eraser</span>
+            </button>
+            <button onClick={() => setGridModal(true)} title="Grid"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-on-surface-variant hover:bg-white/5 transition-all">
+              <span className="material-symbols-outlined text-sm text-secondary">grid_view</span>
+              <span className="hidden lg:inline">Grid</span>
+            </button>
+            <button onClick={() => setShowBgPicker(o => !o)} title="Canvas Color"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider text-on-surface-variant hover:bg-white/5 transition-all">
+              <div className="w-3.5 h-3.5 rounded border border-white/20" style={{ backgroundColor: canvasBg }} />
+              <span className="hidden lg:inline">Canvas</span>
+            </button>
+          </div>
+
+          {/* Right: save */}
+          <button className="bg-primary text-on-primary px-5 py-2 rounded-xl font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg shrink-0">
+            Save Changes
+          </button>
         </div>
 
-        {/* Viewport */}
-        <div className="flex-1 relative cursor-crosshair overflow-hidden flex items-center justify-center translate-z-0" data-canvas="true"
-          onPointerDown={handleCanvasPointerDown} onPointerMove={handleCanvasPointerMove} onPointerUp={handleCanvasPointerUp} onContextMenu={e => e.preventDefault()}>
-          
-          <div ref={canvasWrapRef} data-canvas="true" className="relative transition-transform duration-75 flex items-center justify-center"
-            style={{ 
-              width: '4000px', 
-              height: '4000px', 
-              transform: `scale(${zoom}) translate(${panOffset.x / zoom}px, ${panOffset.y / zoom}px)`, 
-              transformOrigin: 'center center' 
+        {/* Canvas color picker — drops below toolbar */}
+        {showBgPicker && (
+          <div className="absolute top-[52px] right-4 z-[200] bg-[#0d1117] border border-outline-variant/20 rounded-2xl shadow-2xl w-64 overflow-hidden">
+            {/* Hidden file input */}
+            <input ref={bgImageInputRef} type="file" accept="image/*" className="hidden"
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const url = URL.createObjectURL(file);
+                  setCanvasBgImage(url);
+                  setShowBgPicker(false);
+                }
+              }} />
+
+            {/* Color section */}
+            <div className="px-4 py-3 border-b border-outline-variant/10">
+              <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold">Canvas Color</p>
+            </div>
+            <div className="p-3 grid grid-cols-5 gap-2">
+              {['#0a0c10','#111827','#1a1a2e','#0f172a','#18181b','#1e293b','#2d1b69','#0c1a0c','#1a0c0c','#ffffff','#f8fafc','#e2e8f0','#94a3b8','#475569','#334155'].map(c => (
+                <button key={c} onClick={() => { setCanvasBg(c); setCanvasBgImage(''); setShowBgPicker(false); }}
+                  className={`w-7 h-7 rounded-lg border-2 transition-all hover:scale-110 ${canvasBg === c && !canvasBgImage ? 'border-primary scale-110' : 'border-outline-variant/20'}`}
+                  style={{ backgroundColor: c }} />
+              ))}
+            </div>
+            <div className="px-3 pb-3 flex items-center gap-2">
+              <label className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold shrink-0">Custom</label>
+              <input type="color" value={canvasBg}
+                onChange={e => { setCanvasBg(e.target.value); setCanvasBgImage(''); }}
+                className="flex-1 h-7 rounded cursor-pointer border border-outline-variant/20" />
+            </div>
+
+            {/* Background image section */}
+            <div className="border-t border-outline-variant/10 px-4 py-3">
+              <p className="text-[9px] uppercase tracking-widest text-on-surface-variant font-bold mb-2">Background Image</p>
+              <div className="flex flex-col gap-2">
+                <button
+                  onClick={() => bgImageInputRef.current?.click()}
+                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-surface-container border border-outline-variant/20 text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high transition-colors"
+                >
+                  <span className="material-symbols-outlined text-sm text-primary">upload_file</span>
+                  Upload Image
+                </button>
+                {canvasBgImage && (
+                  <div className="relative rounded-xl overflow-hidden border border-outline-variant/20">
+                    <img src={canvasBgImage} alt="bg preview" className="w-full h-16 object-cover opacity-70" />
+                    <button
+                      onClick={() => setCanvasBgImage('')}
+                      className="absolute top-1 right-1 w-5 h-5 bg-error rounded-full flex items-center justify-center"
+                    >
+                      <span className="material-symbols-outlined text-white" style={{ fontSize: '11px' }}>close</span>
+                    </button>
+                    <span className="absolute bottom-1 left-2 text-[9px] text-white font-bold uppercase tracking-wider">Active</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Viewport — workspace area, pan/zoom here */}
+        <div className="flex-1 relative overflow-hidden flex items-center justify-center"
+          style={{ cursor: panMode ? 'grab' : 'default' }}
+          onPointerDown={handleCanvasPointerDown}
+          onPointerMove={handleCanvasPointerMove}
+          onPointerUp={handleCanvasPointerUp}
+          onContextMenu={e => e.preventDefault()}>
+
+          {/* The actual canvas — fixed size, zoomed/panned */}
+          <div
+            ref={canvasWrapRef}
+            data-canvas="true"
+            className="relative shadow-2xl"
+            style={{
+              width: '900px',
+              height: '600px',
+              backgroundColor: canvasBg,
+              backgroundImage: canvasBgImage ? `url(${canvasBgImage})` : undefined,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              borderRadius: '16px',
+              border: '1px solid rgba(255,255,255,0.08)',
+              transform: `scale(${zoom}) translate(${panOffset.x / zoom}px, ${panOffset.y / zoom}px)`,
+              transformOrigin: 'center center',
+              flexShrink: 0,
             }}>
-            
-            {/* Map Layer */}
-            <div className="absolute inset-0 bg-[#0d1117] rounded-3xl border border-outline-variant/10 shadow-2xl overflow-hidden pointer-events-none" />
 
             {/* Elements */}
             {elements.map(el => (
-              <CanvasEl key={el.id} el={el} selected={selectedIds.includes(el.id)} selectedIds={selectedIds} onSelect={(id, m) => setSelectedIds(prev => m ? (prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]) : [id])} onUpdate={handleUpdate} onUpdateBulk={handleUpdateBulk} onDelete={handleDelete} recordAction={recordAction} />
+              <CanvasEl key={el.id} el={el} selected={selectedIds.includes(el.id)} selectedIds={selectedIds}
+                onSelect={(id, m) => setSelectedIds(prev => m ? (prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]) : [id])}
+                onUpdate={handleUpdate} onUpdateBulk={handleUpdateBulk} onDragStart={handleDragStart}
+                onDelete={handleDelete} recordAction={recordAction} />
             ))}
 
             {/* Marquee UI */}
-            {selectionRect && (
+            {selectionRect && canvasWrapRef.current && (
               <div className="absolute border ring-1 ring-primary/40 bg-primary/5 pointer-events-none z-50 rounded"
                 style={{
-                  left: Math.min(selectionRect.x1, selectionRect.x2) - (canvasWrapRef.current?.getBoundingClientRect().left ?? 0),
-                  top: Math.min(selectionRect.y1, selectionRect.y2) - (canvasWrapRef.current?.getBoundingClientRect().top ?? 0),
-                  width: Math.abs(selectionRect.x1 - selectionRect.x2),
-                  height: Math.abs(selectionRect.y1 - selectionRect.y2),
+                  left: (Math.min(selectionRect.x1, selectionRect.x2) - canvasWrapRef.current.getBoundingClientRect().left) / zoom,
+                  top: (Math.min(selectionRect.y1, selectionRect.y2) - canvasWrapRef.current.getBoundingClientRect().top) / zoom,
+                  width: Math.abs(selectionRect.x1 - selectionRect.x2) / zoom,
+                  height: Math.abs(selectionRect.y1 - selectionRect.y2) / zoom,
                   borderColor: '#0066FF'
                 }} />
             )}
           </div>
         </div>
 
-        {/* Floating Bottom Toolbar */}
-        <div className="absolute bottom-10 left-12 right-12 z-[100] flex justify-center pointer-events-none">
-          <div className="flex items-center gap-2 bg-surface-container/60 backdrop-blur-2xl border border-outline-variant/10 p-2 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] pointer-events-auto">
-            <button onClick={() => setPanMode(!panMode)} className={`p-4 rounded-2xl flex flex-col items-center gap-1 transition-all ${panMode ? 'bg-primary text-on-primary' : 'hover:bg-surface-container-high'}`}>
-              <span className="material-symbols-outlined">pan_tool</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Pan</span>
-            </button>
-            <div className="w-px h-10 bg-outline-variant/20 mx-2" />
-            {(Object.keys(CFG) as ElementType[]).filter(t => t !== 'polygon' && t !== 'seat').map(type => (
-              <button key={type} onClick={() => setAddModal(type)} className="p-4 rounded-2xl flex flex-col items-center gap-1 hover:bg-surface-container-high transition-all">
-                <span className="material-symbols-outlined text-primary">{CFG[type].icon}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider">{type}</span>
-              </button>
-            ))}
-            <button onClick={() => setGridModal(true)} className="p-4 rounded-2xl flex flex-col items-center gap-1 hover:bg-surface-container-high transition-all">
-               <span className="material-symbols-outlined text-secondary">grid_view</span>
-               <span className="text-[10px] font-bold uppercase tracking-wider">Grid</span>
-            </button>
-            <div className="w-px h-10 bg-outline-variant/20 mx-2" />
-            <button onClick={() => setIsEraserMode(!isEraserMode)} className={`p-4 rounded-2xl flex flex-col items-center gap-1 transition-all ${isEraserMode ? 'bg-error text-white' : 'hover:bg-surface-container-high'}`}>
-              <span className="material-symbols-outlined">auto_fix_off</span>
-              <span className="text-[10px] font-bold uppercase tracking-wider">Eraser</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Zoom Controls Overlay */}
-        <div className="absolute bottom-10 right-10 z-[100] flex items-center gap-3 bg-surface-container/60 backdrop-blur-xl border border-outline-variant/10 p-2 rounded-2xl shadow-2xl">
-           <button onClick={() => setZoom(z => Math.max(0.1, z - 0.1))} className="material-symbols-outlined p-2 hover:text-primary transition-colors">remove</button>
-           <span className="text-xs font-bold w-12 text-center">{Math.round(zoom * 100)}%</span>
-           <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="material-symbols-outlined p-2 hover:text-primary transition-colors">add</button>
-           <div className="w-px h-6 bg-outline-variant/20 mx-1" />
-           <button onClick={() => { setZoom(1); setPanOffset({ x: 0, y: 0 }); }} className="material-symbols-outlined p-2 hover:text-primary transition-colors">restart_alt</button>
+        {/* Zoom Controls — bottom right */}
+        <div className="absolute bottom-6 right-6 z-[100] flex items-center gap-2 bg-[#0d1117]/90 backdrop-blur-xl border border-outline-variant/20 p-2 rounded-2xl shadow-2xl">
+           <button onClick={() => setZoom(z => Math.max(0.1, z - 0.1))} className="material-symbols-outlined p-1.5 hover:text-primary transition-colors text-on-surface-variant">remove</button>
+           <span className="text-xs font-bold w-10 text-center">{Math.round(zoom * 100)}%</span>
+           <button onClick={() => setZoom(z => Math.min(3, z + 0.1))} className="material-symbols-outlined p-1.5 hover:text-primary transition-colors text-on-surface-variant">add</button>
+           <div className="w-px h-5 bg-outline-variant/20 mx-1" />
+           <button onClick={() => { setZoom(1); setPanOffset({ x: 0, y: 0 }); }} className="material-symbols-outlined p-1.5 hover:text-primary transition-colors text-on-surface-variant" title="Reset">restart_alt</button>
         </div>
       </main>
 
@@ -514,6 +670,33 @@ export default function VenueBuilderPage() {
                    <label className="block text-[10px] font-bold text-on-surface-variant tracking-widest uppercase mb-2">Name</label>
                    <input value={selectedEl.label} onChange={e => handleUpdate(selectedEl.id, { label: e.target.value })} className="w-full bg-surface-container-highest border border-outline-variant/10 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-primary/50 outline-none" />
                 </div>
+                {(selectedEl.type === 'zone' || selectedEl.type === 'stall' || selectedEl.type === 'seat') && (
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
+                      Capacity {selectedEl.type === 'seat' ? '(fixed: 1)' : ''}
+                    </label>
+                    {selectedEl.type === 'seat' ? (
+                      <div className="flex items-center gap-3 bg-secondary/10 border border-secondary/20 rounded-xl px-4 py-3">
+                        <span className="material-symbols-outlined text-secondary text-sm">chair</span>
+                        <span className="text-sm font-bold text-secondary">1 seat</span>
+                        <span className="text-xs text-on-surface-variant ml-auto">Fixed capacity</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="number" min={1}
+                          value={selectedEl.capacity ?? 100}
+                          onChange={e => handleUpdate(selectedEl.id, { capacity: Math.max(1, Number(e.target.value)) })}
+                          className="flex-1 bg-surface-container-highest border border-outline-variant/10 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-primary/50 outline-none"
+                        />
+                        <div className="flex flex-col items-center px-3 py-2 bg-secondary/10 border border-secondary/20 rounded-xl shrink-0">
+                          <span className="text-base font-bold text-secondary">{(selectedEl.capacity ?? 100).toLocaleString()}</span>
+                          <span className="text-[9px] uppercase tracking-wider text-on-surface-variant">persons</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div className="space-y-4">
                    <label className="block text-[10px] font-bold text-on-surface-variant tracking-widest uppercase mb-2">Metrics</label>
                    <div className="grid grid-cols-2 gap-3">
@@ -576,7 +759,7 @@ export default function VenueBuilderPage() {
         )}
       </aside>
 
-      {addModal && <AddElementModal type={addModal} onConfirm={label => handleAdd(addModal, label)} onClose={() => setAddModal(null)} />}
+      {addModal && <AddElementModal type={addModal} onConfirm={(label, capacity) => handleAdd(addModal, label, capacity)} onClose={() => setAddModal(null)} />}
       
       {loadModalOpen && <LoadLayoutModal layouts={savedLayouts} onSelect={handleLoadProject} onClose={() => setLoadModalOpen(false)} />}
 
@@ -584,25 +767,67 @@ export default function VenueBuilderPage() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setGridModal(false)} />
            <div className="relative w-full max-w-sm bg-surface-container-low border border-outline-variant/20 rounded-2xl shadow-2xl p-6">
-              <h3 className="font-headline text-lg font-bold text-on-surface mb-4">Generate Seat Grid</h3>
+              <h3 className="font-headline text-lg font-bold text-on-surface mb-1">Generate Seat Grid</h3>
+              <p className="text-xs text-on-surface-variant mb-4">Each cell = 1 seat (capacity 1)</p>
               <div className="space-y-4">
                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1"><label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Rows</label><input type="number" id="g-rows" defaultValue="5" className="w-full bg-surface-container-highest rounded-xl px-4 py-2 outline-none border border-outline-variant/10" /></div>
-                    <div className="space-y-1"><label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Cols</label><input type="number" id="g-cols" defaultValue="8" className="w-full bg-surface-container-highest rounded-xl px-4 py-2 outline-none border border-outline-variant/10" /></div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Rows</label>
+                      <input type="number" id="g-rows" defaultValue="5" min="1" max="50"
+                        className="w-full bg-surface-container-highest rounded-xl px-4 py-2 outline-none border border-outline-variant/10"
+                        onChange={() => {
+                          const r = Number((document.getElementById('g-rows') as HTMLInputElement).value);
+                          const c = Number((document.getElementById('g-cols') as HTMLInputElement).value);
+                          const cap = document.getElementById('g-capacity');
+                          if (cap) cap.textContent = String(r * c);
+                        }} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest opacity-60">Cols</label>
+                      <input type="number" id="g-cols" defaultValue="8" min="1" max="50"
+                        className="w-full bg-surface-container-highest rounded-xl px-4 py-2 outline-none border border-outline-variant/10"
+                        onChange={() => {
+                          const r = Number((document.getElementById('g-rows') as HTMLInputElement).value);
+                          const c = Number((document.getElementById('g-cols') as HTMLInputElement).value);
+                          const cap = document.getElementById('g-capacity');
+                          if (cap) cap.textContent = String(r * c);
+                        }} />
+                    </div>
                  </div>
+
+                 {/* Capacity display */}
+                 <div className="flex items-center justify-between bg-secondary/10 border border-secondary/20 rounded-xl px-4 py-3">
+                   <div>
+                     <p className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold">Total Capacity</p>
+                     <p className="text-xs text-on-surface-variant mt-0.5">1 seat per cell</p>
+                   </div>
+                   <div className="text-right">
+                     <span id="g-capacity" className="text-2xl font-bold text-secondary">40</span>
+                     <span className="text-xs text-on-surface-variant ml-1">seats</span>
+                   </div>
+                 </div>
+
                  <button onClick={() => {
                    const rows = Number((document.getElementById('g-rows') as HTMLInputElement).value);
                    const cols = Number((document.getElementById('g-cols') as HTMLInputElement).value);
                    const newSeats: CanvasElement[] = [];
                    for (let r=0; r<rows; r++) {
                      for (let c=0; c<cols; c++) {
-                       newSeats.push({ id: `s-${Date.now()}-${r}-${c}`, type: 'seat', label: `${r+1}-${c+1}`, x: 30 + c*3, y: 30 + r*4, w: 2, h: 3, color: '#4edea3', opacity: 100, rotation: 0, access: 'public' });
+                       newSeats.push({
+                         id: `s-${Date.now()}-${r}-${c}`,
+                         type: 'seat', label: `${r+1}-${c+1}`,
+                         x: 30 + c*3, y: 30 + r*4, w: 2, h: 3,
+                         color: '#4edea3', opacity: 100, rotation: 0,
+                         access: 'public', capacity: 1
+                       });
                      }
                    }
                    recordAction();
                    setElements(prev => [...prev, ...newSeats]);
                    setGridModal(false);
-                 }} className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold shadow-lg hover:brightness-110 transition-all">Generate Grid</button>
+                 }} className="w-full py-3 bg-primary text-on-primary rounded-xl font-bold shadow-lg hover:brightness-110 transition-all">
+                   Generate Grid
+                 </button>
               </div>
            </div>
         </div>

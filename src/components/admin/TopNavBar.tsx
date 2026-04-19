@@ -49,7 +49,7 @@ export default function TopNavBar({ onMenuClick }: { onMenuClick: () => void }) 
   return (
     <header className="sticky top-0 z-50 bg-[#0b1326]/90 backdrop-blur-md flex justify-between items-center px-6 h-16 shrink-0 border-b border-outline-variant/20">
       <div className="flex items-center gap-4">
-        <button onClick={onMenuClick} className="md:hidden text-[#bcc7de] p-1 hover:bg-[#171f33] rounded-lg transition-colors">
+        <button onClick={onMenuClick} className="text-[#bcc7de] p-1.5 hover:bg-[#171f33] rounded-lg transition-colors">
           <span className="material-symbols-outlined">menu</span>
         </button>
         <Link href="/admin" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
