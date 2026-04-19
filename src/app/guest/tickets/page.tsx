@@ -1,68 +1,22 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase-client';
-import { mockData } from '@/lib/mock-data';
+
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useGuest } from '../GuestContext';
 import { QRCodeCanvas } from 'qrcode.react';
 
-interface TicketData {
-  gate: string;
-  section: string;
-  row: string;
-  seat: string;
-  ticketId: string;
-  eventName: string;
-  eventDate: string;
-  eventTime: string;
-  guestName: string;
-  guestAge: string;
-  guestIdLast4: string;
-  guestMobile: string;
-  guestEmail: string;
-  uid: string;
-}
-
 export default function GuestTicketPage() {
-  const [ticket, setTicket] = useState<TicketData | null>(null);
+  const router = useRouter();
+  const { tickets, loading: guestLoading, user } = useGuest();
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [downloading, setDownloading] = useState(false);
   const [downloadMenu, setDownloadMenu] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const unsub = onAuthStateChanged(auth, async (user: User | null) => {
-      if (user) {
-        let stored: Partial<TicketData> = {};
-        try {
-          const raw = localStorage.getItem('ticket_data');
-          if (raw) stored = JSON.parse(raw);
-        } catch {}
+  const activeTicket = tickets[currentIndex];
 
-        let claims: Record<string, unknown> = {};
-        try {
-          const idTokenResult = await user.getIdTokenResult(true);
-          claims = idTokenResult.claims as Record<string, unknown>;
-        } catch {}
-
-        setTicket({
-          gate:         (stored.gate        || claims.gate        as string) || mockData.currentEvent.location.gate,
-          section:      (stored.section     || claims.section     as string) || mockData.currentEvent.location.section,
-          row:          (stored.row         || claims.row         as string) || mockData.currentEvent.location.row,
-          seat:         (stored.seat        || claims.seat        as string) || mockData.currentEvent.location.seat,
-          ticketId:     user.uid.slice(0, 12).toUpperCase(),
-          uid:          user.uid,
-          eventName:    (stored.eventName   || claims.eventName   as string) || mockData.currentEvent.name,
-          eventDate:    mockData.currentEvent.date,
-          eventTime:    mockData.currentEvent.time,
-          guestName:    (stored.guestName   || claims.guestName   as string) || '',
-          guestAge:     (stored.guestAge    || String(claims.guestAge ?? '')) || '',
-          guestIdLast4: (stored.guestIdLast4|| claims.guestIdLast4 as string) || '',
-          guestMobile:  (stored.guestMobile || claims.guestMobile  as string) || '',
-          guestEmail:   (stored.guestEmail  || claims.guestEmail   as string) || '',
-        });
-      }
-    });
-    return unsub;
-  }, []);
+  const handleNext = () => setCurrentIndex((prev) => (prev + 1) % tickets.length);
+  const handlePrev = () => setCurrentIndex((prev) => (prev - 1 + tickets.length) % tickets.length);
 
   const downloadPNG = async () => {
     if (!printRef.current) return;
@@ -75,7 +29,7 @@ export default function GuestTicketPage() {
       });
       const a = document.createElement('a');
       a.href = canvas.toDataURL('image/png');
-      a.download = `ticket-${ticket?.ticketId ?? 'guest'}.png`;
+      a.download = `pass-${activeTicket.id}.png`;
       a.click();
     } catch (e) { console.error('PNG failed', e); }
     setDownloading(false);
@@ -94,7 +48,7 @@ export default function GuestTicketPage() {
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'px', format: [canvas.width / 3, canvas.height / 3] });
       pdf.addImage(imgData, 'PNG', 0, 0, canvas.width / 3, canvas.height / 3);
-      pdf.save(`ticket-${ticket?.ticketId ?? 'guest'}.pdf`);
+      pdf.save(`pass-${activeTicket.id}.pdf`);
     } catch (e) { console.error('PDF failed', e); }
     setDownloading(false);
   };
@@ -106,7 +60,7 @@ export default function GuestTicketPage() {
     const html = printRef.current.innerHTML.replace(/<canvas[^>]*><\/canvas>/i, `<img src="${qrImg}" style="width:160px;height:160px;" />`);
     const w = window.open('', '_blank');
     if (!w) return;
-    w.document.write(`<html><head><title>Ticket</title><style>
+    w.document.write(`<html><head><title>Operational Pass</title><style>
       body{margin:0;display:flex;justify-content:center;padding:1cm;font-family:Inter,sans-serif;}
       *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
       @page{margin:0;}
@@ -114,131 +68,180 @@ export default function GuestTicketPage() {
     w.document.close();
   };
 
-  if (!ticket) {
+  if (guestLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
-        <div className="w-10 h-10 border-4 border-secondary border-t-transparent rounded-full animate-spin" />
-        <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant">Loading Ticket...</p>
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+        <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant">Syncing Secure Vault...</p>
+      </div>
+    );
+  }
+
+  if (tickets.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
+        <div className="w-20 h-20 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant/20 mb-6">
+           <span className="material-symbols-outlined text-5xl">no_accounts</span>
+        </div>
+        <h2 className="font-headline text-2xl font-bold mb-2">No Active Passes Found</h2>
+        <p className="text-on-surface-variant text-sm max-w-xs mb-8">You haven't been assigned any tactical deployments yet. Visit the Discovery portal to browse operations.</p>
+        <button 
+          onClick={() => router.push('/guest/dashboard')}
+          className="px-8 py-4 bg-primary text-on-primary rounded-2xl font-bold uppercase tracking-widest text-[12px] shadow-xl hover:brightness-110 active:scale-95 transition-all"
+        >
+          Browse Marketplace
+        </button>
       </div>
     );
   }
 
   return (
-    <main className="px-4 py-6 max-w-md mx-auto">
-
-      {/* ── White ticket card — same design as admin print ticket ── */}
-      <div ref={printRef}
-        className="bg-white rounded-[2rem] border-2 border-black/5 shadow-2xl p-8 flex flex-col items-center relative overflow-hidden"
-        style={{ fontFamily: 'Inter, sans-serif', minHeight: '11cm', width: '8.5cm', margin: '0 auto' }}
-      >
-        {/* Security micro-pattern */}
-        <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none overflow-hidden flex flex-wrap gap-4 p-4">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div key={i} className="text-[10px] font-mono -rotate-45 text-black">SENTINEL-SECURE</div>
-          ))}
-        </div>
-
-        {/* Header */}
-        <div className="w-full flex justify-between items-start mb-6 z-10">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full bg-black" />
-              <p className="text-black text-[9px] font-bold uppercase tracking-[0.3em]">Operational Pass</p>
-            </div>
-            <h4 className="text-black font-black text-2xl leading-[0.9] tracking-tighter max-w-[180px]">{ticket.eventName}</h4>
-          </div>
-          <div className="flex flex-col items-end">
-            <div className="w-10 h-10 border-2 border-black/10 rounded-lg flex items-center justify-center bg-white">
-              <span className="material-symbols-outlined text-black text-2xl">lens_blur</span>
-            </div>
-            <p className="text-[7px] text-black font-mono mt-1 opacity-40 uppercase">Auth: V3-909</p>
-          </div>
-        </div>
-
-        {/* QR Code */}
-        <div className="bg-white p-4 border-[3px] border-black rounded-[1.5rem] mb-6 shadow-[8px_8px_0px_rgba(0,0,0,0.05)] z-10">
-          <QRCodeCanvas value={ticket.uid} size={160} level="H" fgColor="#000000" bgColor="#ffffff" />
-        </div>
-
-        {/* Guest info */}
-        <div className="w-full space-y-5 z-10">
-          <div className="flex justify-between items-end border-b border-black/10 pb-3">
-            <div>
-              <p className="text-[8px] uppercase font-bold text-black/40 tracking-widest mb-1">Authenticated Guest</p>
-              <p className="text-lg font-black text-black leading-none">{ticket.guestName || '—'}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[8px] uppercase font-bold text-black/40 tracking-widest mb-1">Age Check</p>
-              <p className="text-sm font-bold text-black">{ticket.guestAge || '—'}</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="p-3 bg-black/5 rounded-xl border border-black/5 flex flex-col justify-center">
-              <p className="text-[7px] uppercase font-bold text-black/40 tracking-widest mb-1">Tactical Zone</p>
-              <p className="text-xs font-black text-black uppercase leading-tight">{ticket.section}</p>
-            </div>
-            <div className="p-3 bg-black border border-black rounded-xl flex flex-col justify-center">
-              <p className="text-[7px] uppercase font-bold text-white/50 tracking-widest mb-1">Entry Gate</p>
-              <p className="text-xs font-black text-white uppercase leading-tight">{ticket.gate}</p>
-            </div>
-          </div>
-
-          <div className="flex justify-between items-center bg-black/5 p-2 rounded-lg border border-dashed border-black/20">
-            <p className="text-[7px] font-mono text-black/60 font-bold uppercase tracking-wider overflow-hidden text-ellipsis whitespace-nowrap mr-2">
-              Pass ID: {ticket.ticketId}
-            </p>
-            <p className="text-[7px] font-mono text-black/60 whitespace-nowrap">{new Date().toLocaleDateString()}</p>
-          </div>
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-black/5 w-full text-center z-10">
-          <p className="text-[6px] text-black/40 font-bold uppercase tracking-[0.4em]">Proprietary Cryptographic Signature Encoded</p>
-        </div>
+    <main className="px-4 py-8 max-w-4xl mx-auto flex flex-col items-center">
+      
+      <div className="w-full flex items-center justify-between mb-8">
+         <h1 className="font-headline text-2xl font-bold">Tactical Portfolio</h1>
+         <div className="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-outline-variant/10">
+            <span className="text-[10px] font-black text-primary uppercase tracking-widest">{currentIndex + 1} / {tickets.length}</span>
+            <span className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">DEPLOYMENTS</span>
+         </div>
       </div>
 
-      {/* Download button */}
-      <div className="relative mt-4 max-w-[8.5cm] mx-auto">
-        <button
-          onClick={() => setDownloadMenu(o => !o)}
-          disabled={downloading}
-          className="w-full flex items-center justify-center gap-2 bg-secondary text-on-secondary-container font-label text-xs font-bold uppercase tracking-widest py-4 rounded-xl hover:brightness-110 transition-all disabled:opacity-60 shadow-[0_0_20px_rgba(78,222,163,0.25)]"
-        >
-          {downloading
-            ? <span className="material-symbols-outlined text-sm animate-spin">sync</span>
-            : <span className="material-symbols-outlined text-sm">download</span>}
-          {downloading ? 'Preparing...' : 'Download Ticket'}
-          {!downloading && <span className="material-symbols-outlined text-sm">expand_more</span>}
-        </button>
+      {/* ── Ticket Carousel ── */}
+      <div className="relative w-full flex items-center justify-center gap-4">
+        {tickets.length > 1 && (
+           <button onClick={handlePrev} className="hidden md:flex w-12 h-12 items-center justify-center rounded-full bg-surface-container border border-outline-variant/10 hover:bg-primary/20 hover:text-primary transition-all">
+              <span className="material-symbols-outlined">chevron_left</span>
+           </button>
+        )}
 
-        {downloadMenu && (
-          <div className="absolute bottom-full mb-2 left-0 right-0 bg-surface-container-low border border-outline-variant/20 rounded-xl overflow-hidden shadow-2xl z-50">
-            <button onClick={downloadPDF} className="flex items-center gap-3 px-5 py-3.5 w-full text-left hover:bg-surface-container transition-colors">
-              <span className="material-symbols-outlined text-error text-lg">picture_as_pdf</span>
-              <div>
-                <p className="text-sm font-bold text-on-surface">PDF Document</p>
-                <p className="text-xs text-on-surface-variant">Print-ready ticket</p>
+        <div className="flex-1 flex flex-col items-center">
+          {/* Card Wrapper for html2canvas */}
+          <div ref={printRef}
+            className="bg-white rounded-[2.5rem] border-2 border-black/5 shadow-[0_32px_128px_rgba(0,0,0,0.1)] p-8 flex flex-col items-center relative overflow-hidden"
+            style={{ fontFamily: 'Inter, sans-serif', width: '340px', minHeight: '520px' }}
+          >
+            {/* Security micro-pattern */}
+            <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none overflow-hidden flex flex-wrap gap-4 p-4">
+              {Array.from({ length: 30 }).map((_, i) => (
+                <div key={i} className="text-[10px] font-mono -rotate-45 text-black">SENTINEL-SECURE-ID</div>
+              ))}
+            </div>
+
+            {/* Header */}
+            <div className="w-full flex justify-between items-start mb-8 z-10">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                  <p className="text-black text-[10px] font-black uppercase tracking-[0.4em]">OPERATIONAL PASS</p>
+                </div>
+                <h4 className="text-black font-black text-3xl leading-[0.85] tracking-tighter uppercase">{activeTicket.event.title}</h4>
               </div>
-            </button>
-            <div className="border-t border-outline-variant/10" />
-            <button onClick={downloadPNG} className="flex items-center gap-3 px-5 py-3.5 w-full text-left hover:bg-surface-container transition-colors">
-              <span className="material-symbols-outlined text-primary text-lg">image</span>
-              <div>
-                <p className="text-sm font-bold text-on-surface">PNG Image</p>
-                <p className="text-xs text-on-surface-variant">Save to photos</p>
+              <div className="flex flex-col items-end">
+                <div className="w-12 h-12 border-2 border-black/10 rounded-2xl flex items-center justify-center bg-white shadow-sm">
+                  <span className="material-symbols-outlined text-black text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>shield</span>
+                </div>
               </div>
-            </button>
-            <div className="border-t border-outline-variant/10" />
-            <button onClick={handlePrint} className="flex items-center gap-3 px-5 py-3.5 w-full text-left hover:bg-surface-container transition-colors">
-              <span className="material-symbols-outlined text-secondary text-lg">print</span>
-              <div>
-                <p className="text-sm font-bold text-on-surface">Print</p>
-                <p className="text-xs text-on-surface-variant">Physical copy</p>
+            </div>
+
+            {/* QR Code Section */}
+            <div className="relative mb-8 z-10">
+               <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full" />
+               <div className="relative bg-white p-5 border-[3px] border-black rounded-[2rem] shadow-[12px_12px_0px_rgba(0,0,0,0.03)] group transition-all">
+                 <QRCodeCanvas value={activeTicket.id} size={180} level="H" fgColor="#000000" bgColor="#ffffff" />
+               </div>
+            </div>
+
+            {/* Details Section */}
+            <div className="w-full space-y-6 z-10 flex-1 flex flex-col justify-end">
+              <div className="flex justify-between items-end border-b-2 border-black/5 pb-4">
+                <div>
+                  <p className="text-[9px] uppercase font-black text-black/40 tracking-[0.2em] mb-1.5">Authenticated Operative</p>
+                  <p className="text-xl font-black text-black leading-none uppercase">{activeTicket.guestName}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] uppercase font-black text-black/40 tracking-[0.2em] mb-1.5">Verification</p>
+                  <p className="text-xs font-mono font-bold text-black opacity-60">ID: {activeTicket.guestIdNumber.slice(0, 4)}***</p>
+                </div>
               </div>
-            </button>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 flex flex-col justify-center">
+                  <p className="text-[8px] uppercase font-black text-primary tracking-widest mb-1">Target Zone</p>
+                  <p className="text-lg font-black text-black uppercase leading-tight">{activeTicket.section}</p>
+                </div>
+                <div className="p-4 bg-black border border-black rounded-2xl flex flex-col justify-center">
+                  <p className="text-[8px] uppercase font-black text-white/50 tracking-widest mb-1">Entry Gate</p>
+                  <p className="text-sm font-black text-white uppercase leading-tight">{activeTicket.gate}</p>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center bg-black/5 p-3 rounded-xl border border-dashed border-black/10">
+                <p className="text-[8px] font-mono text-black/40 font-bold uppercase tracking-wider">Pass UID: {activeTicket.id.slice(0, 16)}</p>
+                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              </div>
+            </div>
           </div>
+        </div>
+
+        {tickets.length > 1 && (
+           <button onClick={handleNext} className="hidden md:flex w-12 h-12 items-center justify-center rounded-full bg-surface-container border border-outline-variant/10 hover:bg-primary/20 hover:text-primary transition-all">
+              <span className="material-symbols-outlined">chevron_right</span>
+           </button>
         )}
       </div>
+
+      {/* Mobile Navigation & Actions */}
+      <div className="w-full max-w-[340px] mt-8 space-y-4">
+         {tickets.length > 1 && (
+           <div className="flex items-center justify-between gap-4 md:hidden">
+              <button onClick={handlePrev} className="flex-1 py-3 bg-surface-container rounded-xl flex items-center justify-center border border-outline-variant/10">
+                <span className="material-symbols-outlined">navigate_before</span>
+              </button>
+              <button onClick={handleNext} className="flex-1 py-3 bg-surface-container rounded-xl flex items-center justify-center border border-outline-variant/10">
+                <span className="material-symbols-outlined">navigate_next</span>
+              </button>
+           </div>
+         )}
+
+         <div className="relative">
+            <button
+              onClick={() => setDownloadMenu(o => !o)}
+              disabled={downloading}
+              className="w-full flex items-center justify-center gap-3 bg-primary text-on-primary font-bold text-xs uppercase tracking-widest py-5 rounded-2xl hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 shadow-2xl"
+            >
+              {downloading ? <span className="animate-spin material-symbols-outlined text-sm">sync</span> : <span className="material-symbols-outlined text-sm">download</span>}
+              {downloading ? 'Preparing Pass...' : 'Download / Print Pass'}
+              {!downloading && <span className="material-symbols-outlined text-sm opacity-40">expand_more</span>}
+            </button>
+
+            {downloadMenu && (
+              <div className="absolute bottom-full mb-3 left-0 right-0 bg-[#171f33] border border-outline-variant/10 rounded-2xl overflow-hidden shadow-2xl z-50 animate-in slide-in-from-bottom-2">
+                <button onClick={downloadPDF} className="flex items-center gap-4 px-6 py-4 w-full text-left hover:bg-white/5 transition-colors border-b border-outline-variant/5">
+                  <span className="material-symbols-outlined text-error">picture_as_pdf</span>
+                  <div>
+                    <p className="text-sm font-bold text-on-surfaceCaps">PDF Document</p>
+                    <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider">Tactical High-Res Print</p>
+                  </div>
+                </button>
+                <button onClick={downloadPNG} className="flex items-center gap-4 px-6 py-4 w-full text-left hover:bg-white/5 transition-colors border-b border-outline-variant/5">
+                  <span className="material-symbols-outlined text-primary">image</span>
+                  <div>
+                    <p className="text-sm font-bold text-on-surfaceCaps">PNG Image</p>
+                    <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider">Save to Secure Storage</p>
+                  </div>
+                </button>
+                <button onClick={handlePrint} className="flex items-center gap-4 px-6 py-4 w-full text-left hover:bg-white/5 transition-colors">
+                  <span className="material-symbols-outlined text-secondary">print</span>
+                  <div>
+                    <p className="text-sm font-bold text-on-surfaceCaps">Direct Print</p>
+                    <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider">Hardcopy Deployment</p>
+                  </div>
+                </button>
+              </div>
+            )}
+         </div>
+      </div>
+
     </main>
   );
 }

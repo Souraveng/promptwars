@@ -60,7 +60,8 @@ mutation IssueTicket(
   $guestAge: Int!,
   $guestIdNumber: String!,
   $guestMobile: String!,
-  $guestEmail: String!
+  $guestEmail: String!,
+  $userId: String = null
 ) @auth(level: PUBLIC) {
   ticket_insert(data: {
     eventId: $eventId,
@@ -73,6 +74,7 @@ mutation IssueTicket(
     guestIdNumber: $guestIdNumber,
     guestMobile: $guestMobile,
     guestEmail: $guestEmail,
+    userId: $userId,
     status: "ACTIVE"
   })
 }
@@ -112,5 +114,24 @@ mutation DeleteEmergencyEventsByEvent($eventId: UUID!) @auth(level: PUBLIC) {
 mutation SetActiveEvent($id: UUID!, $isActive: Boolean!) @auth(level: PUBLIC) {
   event_update(id: $id, data: {
     isActive: $isActive
+  })
+}
+
+# User Profile Operations
+mutation UpsertUserProfile(
+  $id: String!,
+  $name: String!,
+  $age: Int!,
+  $idCardNumber: String!,
+  $phone: String!,
+  $email: String!
+) @auth(level: PUBLIC) {
+  userProfile_upsert(data: {
+    id: $id,
+    name: $name,
+    age: $age,
+    idCardNumber: $idCardNumber,
+    phone: $phone,
+    email: $email
   })
 }

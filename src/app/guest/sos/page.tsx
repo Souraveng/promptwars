@@ -4,11 +4,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocation } from '@/hooks/useLocation';
 import { dataconnect } from '@/lib/firebase-client';
+import { useGuest } from '@/app/guest/GuestContext';
 import { executeMutation, executeQuery, mutationRef, queryRef } from 'firebase/data-connect';
 import { GetActiveEventData, LogEmergencyEventVariables } from '@/types/dataconnect';
 
 export default function GuestSOSPage() {
   const router = useRouter();
+  const { activeTicket } = useGuest();
   const { lat, lng, getLocation, isMock } = useLocation();
   const [isHolding, setIsHolding] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -17,22 +19,34 @@ export default function GuestSOSPage() {
   const holdTimerRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Authorization Guard
+  useEffect(() => {
+    if (!activeTicket) {
+      router.replace('/guest/dashboard');
+    }
+  }, [activeTicket, router]);
+
   const HOLD_DURATION = 3000; // 3 seconds
 
   useEffect(() => {
-    const fetchActiveEvent = async () => {
-      try {
-        const ref = queryRef<GetActiveEventData, {}>(dataconnect, 'GetActiveEvent', {});
-        const result = await executeQuery(ref);
-        if (result.data?.events && result.data.events.length > 0) {
-          setActiveEventId(result.data.events[0].id);
+    // Prefer ticket eventId, fallback to global active event if needed (safety)
+    if (activeTicket?.eventId) {
+      setActiveEventId(activeTicket.eventId);
+    } else {
+      const fetchActiveEvent = async () => {
+        try {
+          const ref = queryRef<GetActiveEventData, {}>(dataconnect, 'GetActiveEvent', {});
+          const result = await executeQuery(ref);
+          if (result.data?.events && result.data.events.length > 0) {
+            setActiveEventId(result.data.events[0].id);
+          }
+        } catch (err) {
+          console.error('Failed to fetch active event:', err);
         }
-      } catch (err) {
-        console.error('Failed to fetch active event:', err);
-      }
-    };
-    fetchActiveEvent();
-  }, []);
+      };
+      fetchActiveEvent();
+    }
+  }, [activeTicket]);
 
   const startHolding = () => {
     if (isTriggered) return;

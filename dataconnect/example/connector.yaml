@@ -1,3 +1,5 @@
 connectorId: example
-# Removed problematic automatic generation that was pointing to incorrect absolute paths.
-# We are currently using the dynamic Data Connect SDK (mutationRef/executeQuery).
+generate:
+  javascriptSdk:
+    outputDir: "../../src/generated/dataconnect"
+    package: "@promptwars/dataconnect"

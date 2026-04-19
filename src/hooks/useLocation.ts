@@ -1,12 +1,5 @@
 import { useState, useCallback } from 'react';
-
-export interface LocationState {
-  lat: number | null;
-  lng: number | null;
-  error: string | null;
-  loading: boolean;
-  isMock?: boolean;
-}
+import { LocationState } from '@/types/common';
 
 export function useLocation() {
   const [state, setState] = useState<LocationState>({

@@ -39,6 +39,18 @@ type Ticket @table {
   
   # Relationships
   eventId: UUID!
+  event: Event! @ref(fields: ["eventId"])
+  userId: String # Links to UserProfile.id (Firebase UID)
+}
+
+type UserProfile @table(key: ["id"]) {
+  id: String! # Firebase UID
+  name: String!
+  age: Int!
+  idCardNumber: String!
+  phone: String!
+  email: String!
+  createdAt: Timestamp! @default(expr: "request.time")
 }
 
 type EmergencyEvent @table {

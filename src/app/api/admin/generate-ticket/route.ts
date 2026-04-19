@@ -65,13 +65,8 @@ export async function POST(request: Request) {
       token: customToken,
     };
 
-    // Store in server-side map
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    await fetch(`${baseUrl}/api/admin/ticket-store`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticketId, data: ticketPayload }),
-    }).catch(() => {}); // non-blocking
+    // Store in server-side map (Legacy in-memory store removed)
+    // The Guest login now queries Data Connect directly for ticketId
 
     // QR encodes a SHORT URL — just the ticketId, no JWT
     const shortUrl = `/guest/login?tid=${ticketId}`;

@@ -37,6 +37,16 @@ export interface VenueLayout {
   createdAt: string;
 }
 
+export interface UserProfile {
+  id: string;
+  name: string;
+  age: number;
+  idCardNumber: string;
+  phone: string;
+  email: string;
+  createdAt: string;
+}
+
 export interface ListEventsData {
   events: Event[];
 }
@@ -84,4 +94,40 @@ export interface IssueTicketVariables {
   guestIdNumber: string;
   guestMobile: string;
   guestEmail: string;
+}
+
+export interface GetUserProfileData {
+  userProfile: UserProfile | null;
+}
+
+export interface GetGuestTicketsData {
+  tickets: (Ticket & { event: Event })[];
+}
+
+export interface UpsertUserProfileVariables {
+  id: string;
+  name: string;
+  age: number;
+  idCardNumber: string;
+  phone: string;
+  email: string;
+}
+
+export interface LogEmergencyEventVariables {
+  type: string;
+  priority: string;
+  details: string;
+  lat?: number | null;
+  lng?: number | null;
+  eventId?: string | null;
+}
+
+export interface GetTicketVariables {
+  id: string;
+}
+
+export interface GetTicketData {
+  ticket: Ticket & {
+    event: Event;
+  } | null;
 }

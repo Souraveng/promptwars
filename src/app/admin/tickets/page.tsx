@@ -4,6 +4,7 @@ import { QRCodeCanvas } from 'qrcode.react';
 import { dataconnect } from '@/lib/firebase-client';
 import { executeQuery } from 'firebase/data-connect';
 import { ListEventsData, Event, ListTicketsData, Ticket } from '@/types/dataconnect';
+import VenueSeatingChart from '@/components/shared/VenueSeatingChart';
 
 export default function TicketManagementPage() {
   const [loading, setLoading] = useState(false);
@@ -279,6 +280,7 @@ export default function TicketManagementPage() {
     setGuestData(prev => ({
       ...prev,
       section: el.label,
+      seat: el.id, // Store element ID
       gate: el.access === 'restricted' ? 'VIP Gate' : 'Main Entrance'
     }));
     setShowMap(false);
@@ -613,11 +615,11 @@ export default function TicketManagementPage() {
       {showMap && currentLayout && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setShowMap(false)} />
-          <div className="relative w-full max-w-4xl bg-surface-container-low border border-outline-variant/20 rounded-3xl shadow-[0_32px_128px_rgba(6,14,32,0.8)] overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="relative w-full max-w-5xl bg-surface-container-low border border-outline-variant/20 rounded-3xl shadow-[0_32px_128px_rgba(6,14,32,0.8)] overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-6 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-low/50 backdrop-blur-xl">
               <div>
-                <h3 className="font-headline text-2xl font-bold text-primary">Interactive Venue Deployment</h3>
-                <p className="text-[10px] text-outline font-bold tracking-[0.2em] uppercase mt-1">Select Tactical Zone to populate register</p>
+                <h3 className="font-headline text-2xl font-bold text-primary">Tactical Deployment Map</h3>
+                <p className="text-[10px] text-outline font-bold tracking-[0.2em] uppercase mt-1">Select zone/seat to assign operative context</p>
               </div>
               <button onClick={() => setShowMap(false)} className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container hover:bg-surface-bright transition-colors">
                 <span className="material-symbols-outlined">close</span>
@@ -625,59 +627,19 @@ export default function TicketManagementPage() {
             </div>
 
             <div className="flex-1 overflow-hidden p-8 flex items-center justify-center bg-[#07090c]">
-              <div className="relative w-full aspect-[5/3] max-w-[800px] border border-outline-variant/5 rounded-2xl bg-black/40 shadow-inner overflow-hidden">
-                <svg viewBox="0 0 100 100" className="w-full h-full" preserveAspectRatio="none">
-                  {JSON.parse(currentLayout.elements).map((el: any) => {
-                    if (el.type === 'zone' || el.type === 'polygon' || el.type === 'seat') {
-                      return (
-                        <g 
-                          key={el.id} 
-                          onClick={() => onSelectMapZone(el)}
-                          className="cursor-pointer group"
-                        >
-                          {el.type === 'polygon' ? (
-                            <polygon 
-                              points={el.points.map((p: any) => `${p.x + el.x},${p.y + el.y}`).join(' ')}
-                              fill={el.color}
-                              fillOpacity={el.opacity / 150}
-                              stroke={el.color}
-                              strokeWidth="0.5"
-                              className="group-hover:fill-opacity-80 transition-all duration-300"
-                            />
-                          ) : (
-                            <rect 
-                              x={el.x} y={el.y} width={el.w} height={el.h}
-                              fill={el.color}
-                              fillOpacity={el.opacity / 150}
-                              stroke={el.color}
-                              strokeWidth="0.5"
-                              rx="1"
-                              className="group-hover:fill-opacity-80 transition-all duration-300"
-                            />
-                          )}
-                          <text 
-                            x={el.x + (el.w ? el.w/2 : 0)} 
-                            y={el.y + (el.h ? el.h/2 : 0)} 
-                            fill="white" 
-                            fontSize="2" 
-                            fontWeight="bold"
-                            textAnchor="middle" 
-                            alignmentBaseline="middle"
-                            className="pointer-events-none drop-shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            {el.label}
-                          </text>
-                        </g>
-                      )
-                    }
-                    return null;
-                  })}
-                </svg>
-              </div>
+               <VenueSeatingChart 
+                 elements={JSON.parse(currentLayout.elements)}
+                 ticketCounts={tickets.reduce((acc: Record<string, number>, t) => {
+                   acc[t.seat] = (acc[t.seat] || 0) + 1;
+                   return acc;
+                 }, {})}
+                 selectedId={guestData.seat}
+                 onSelect={onSelectMapZone}
+               />
             </div>
 
             <div className="p-4 bg-surface-container-lowest/30 border-t border-outline-variant/10 text-center">
-              <p className="text-[10px] text-outline-variant font-medium">Click on any highlighted zone to designate context in the registration form.</p>
+              <p className="text-[10px] text-outline-variant font-medium">Click on any green zone to designate tactical position in the minting form.</p>
             </div>
           </div>
         </div>
