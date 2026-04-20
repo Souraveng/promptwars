@@ -32,7 +32,7 @@ mutation CreateEvent(
   $startTime: Timestamp = null,
   $expiryDate: Timestamp = null,
   $bannerUrl: String = null
-) @auth(level: ADMIN) {
+) @auth(level: NO_ACCESS) {
   event_insert(data: {
     title: $title,
     venueName: $venueName,
@@ -62,7 +62,7 @@ mutation IssueTicket(
   $guestMobile: String!,
   $guestEmail: String!,
   $userId: String = null
-) @auth(level: ADMIN) {
+) @auth(level: NO_ACCESS) {
   ticket_insert(data: {
     eventId: $eventId,
     gate: $gate,
@@ -76,48 +76,42 @@ mutation IssueTicket(
     guestEmail: $guestEmail,
     userId: $userId,
     status: "ACTIVE"
-  }) {
-    id
-  }
+  })
 }
 
 # Venue Layout CRUD
-mutation CreateVenueLayout($name: String!, $elements: String!) @auth(level: ADMIN) {
+mutation CreateVenueLayout($name: String!, $elements: String!) @auth(level: NO_ACCESS) {
   venueLayout_insert(data: {
     name: $name,
     elements: $elements
-  }) {
-    id
-  }
+  })
 }
 
-mutation UpdateVenueLayout($id: UUID!, $name: String, $elements: String) @auth(level: ADMIN) {
+mutation UpdateVenueLayout($id: UUID!, $name: String, $elements: String) @auth(level: NO_ACCESS) {
   venueLayout_update(id: $id, data: {
     name: $name,
     elements: $elements
-  }) {
-    id
-  }
+  })
 }
 
-mutation DeleteVenueLayout($id: UUID!) @auth(level: ADMIN) {
+mutation DeleteVenueLayout($id: UUID!) @auth(level: NO_ACCESS) {
   venueLayout_delete(id: $id)
 }
 
-mutation DeleteEvent($id: UUID!) @auth(level: ADMIN) {
+mutation DeleteEvent($id: UUID!) @auth(level: NO_ACCESS) {
   event_delete(id: $id)
 }
 
-mutation DeleteTicketsByEvent($eventId: UUID!) @auth(level: ADMIN) {
+mutation DeleteTicketsByEvent($eventId: UUID!) @auth(level: NO_ACCESS) {
   ticket_deleteMany(where: { eventId: { eq: $eventId } })
 }
 
-mutation DeleteEmergencyEventsByEvent($eventId: UUID!) @auth(level: ADMIN) {
+mutation DeleteEmergencyEventsByEvent($eventId: UUID!) @auth(level: NO_ACCESS) {
   emergencyEvent_deleteMany(where: { eventId: { eq: $eventId } })
 }
 
 # Toggle an event as the active one for the tactical dashboard
-mutation SetActiveEvent($id: UUID!, $isActive: Boolean!) @auth(level: ADMIN) {
+mutation SetActiveEvent($id: UUID!, $isActive: Boolean!) @auth(level: NO_ACCESS) {
   event_update(id: $id, data: {
     isActive: $isActive
   })
@@ -125,7 +119,7 @@ mutation SetActiveEvent($id: UUID!, $isActive: Boolean!) @auth(level: ADMIN) {
 
 # User Profile Operations
 mutation UpsertUserProfile(
-  $id: String!,
+  $uid: String!,
   $name: String!,
   $age: Int!,
   $idCardNumber: String!,
@@ -133,7 +127,7 @@ mutation UpsertUserProfile(
   $email: String!
 ) @auth(level: USER) {
   userProfile_upsert(data: {
-    id: $id,
+    uid: $uid,
     name: $name,
     age: $age,
     idCardNumber: $idCardNumber,

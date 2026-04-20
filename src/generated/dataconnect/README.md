@@ -16,6 +16,8 @@ This README will guide you through the process of using the generated JavaScript
   - [*ListTickets*](#listtickets)
   - [*GetUserProfile*](#getuserprofile)
   - [*GetGuestTickets*](#getguesttickets)
+  - [*GetTicket*](#getticket)
+  - [*GetSystemAlerts*](#getsystemalerts)
 - [**Mutations**](#mutations)
   - [*LogEmergencyEvent*](#logemergencyevent)
   - [*CreateEvent*](#createevent)
@@ -28,6 +30,7 @@ This README will guide you through the process of using the generated JavaScript
   - [*DeleteEmergencyEventsByEvent*](#deleteemergencyeventsbyevent)
   - [*SetActiveEvent*](#setactiveevent)
   - [*UpsertUserProfile*](#upsertuserprofile)
+  - [*ClaimTicket*](#claimticket)
 
 # Accessing the connector
 A connector is a collection of Queries and Mutations. One SDK is generated for each connector - this SDK is generated for the connector `example`. You can find more information about connectors in the [Data Connect documentation](https://firebase.google.com/docs/data-connect#how-does).
@@ -772,7 +775,7 @@ The `GetUserProfile` query requires an argument of type `GetUserProfileVariables
 
 ```typescript
 export interface GetUserProfileVariables {
-  id: string;
+  uid: string;
 }
 ```
 ### Return Type
@@ -781,14 +784,14 @@ Recall that executing the `GetUserProfile` query returns a `QueryPromise` that r
 The `data` property is an object of type `GetUserProfileData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
 ```typescript
 export interface GetUserProfileData {
-  userProfile?: {
-    id: string;
+  userProfiles: ({
+    uid: string;
     name: string;
     age: number;
     idCardNumber: string;
     phone: string;
     email: string;
-  } & UserProfile_Key;
+  } & UserProfile_Key)[];
 }
 ```
 ### Using `GetUserProfile`'s action shortcut function
@@ -799,25 +802,25 @@ import { connectorConfig, getUserProfile, GetUserProfileVariables } from '@promp
 
 // The `GetUserProfile` query requires an argument of type `GetUserProfileVariables`:
 const getUserProfileVars: GetUserProfileVariables = {
-  id: ..., 
+  uid: ..., 
 };
 
 // Call the `getUserProfile()` function to execute the query.
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await getUserProfile(getUserProfileVars);
 // Variables can be defined inline as well.
-const { data } = await getUserProfile({ id: ..., });
+const { data } = await getUserProfile({ uid: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
 const { data } = await getUserProfile(dataConnect, getUserProfileVars);
 
-console.log(data.userProfile);
+console.log(data.userProfiles);
 
 // Or, you can use the `Promise` API.
 getUserProfile(getUserProfileVars).then((response) => {
   const data = response.data;
-  console.log(data.userProfile);
+  console.log(data.userProfiles);
 });
 ```
 
@@ -829,13 +832,13 @@ import { connectorConfig, getUserProfileRef, GetUserProfileVariables } from '@pr
 
 // The `GetUserProfile` query requires an argument of type `GetUserProfileVariables`:
 const getUserProfileVars: GetUserProfileVariables = {
-  id: ..., 
+  uid: ..., 
 };
 
 // Call the `getUserProfileRef()` function to get a reference to the query.
 const ref = getUserProfileRef(getUserProfileVars);
 // Variables can be defined inline as well.
-const ref = getUserProfileRef({ id: ..., });
+const ref = getUserProfileRef({ uid: ..., });
 
 // You can also pass in a `DataConnect` instance to the `QueryRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -845,12 +848,12 @@ const ref = getUserProfileRef(dataConnect, getUserProfileVars);
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await executeQuery(ref);
 
-console.log(data.userProfile);
+console.log(data.userProfiles);
 
 // Or, you can use the `Promise` API.
 executeQuery(ref).then((response) => {
   const data = response.data;
-  console.log(data.userProfile);
+  console.log(data.userProfiles);
 });
 ```
 
@@ -978,6 +981,270 @@ console.log(data.tickets);
 executeQuery(ref).then((response) => {
   const data = response.data;
   console.log(data.tickets);
+});
+```
+
+## GetTicket
+You can execute the `GetTicket` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+getTicket(vars: GetTicketVariables): QueryPromise<GetTicketData, GetTicketVariables>;
+
+interface GetTicketRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetTicketVariables): QueryRef<GetTicketData, GetTicketVariables>;
+}
+export const getTicketRef: GetTicketRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getTicket(dc: DataConnect, vars: GetTicketVariables): QueryPromise<GetTicketData, GetTicketVariables>;
+
+interface GetTicketRef {
+  ...
+  (dc: DataConnect, vars: GetTicketVariables): QueryRef<GetTicketData, GetTicketVariables>;
+}
+export const getTicketRef: GetTicketRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getTicketRef:
+```typescript
+const name = getTicketRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetTicket` query requires an argument of type `GetTicketVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetTicketVariables {
+  id: UUIDString;
+}
+```
+### Return Type
+Recall that executing the `GetTicket` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetTicketData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetTicketData {
+  ticket?: {
+    id: UUIDString;
+    guestName: string;
+    guestEmail: string;
+    guestAge: number;
+    guestMobile: string;
+    guestIdNumber: string;
+    gate: string;
+    section: string;
+    row: string;
+    seat: string;
+    issuedAt: TimestampString;
+    status: string;
+    eventId: UUIDString;
+    event: {
+      id: UUIDString;
+      title: string;
+      venueName: string;
+      startTime: TimestampString;
+      isActive: boolean;
+    } & Event_Key;
+  } & Ticket_Key;
+}
+```
+### Using `GetTicket`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getTicket, GetTicketVariables } from '@promptwars/dataconnect';
+
+// The `GetTicket` query requires an argument of type `GetTicketVariables`:
+const getTicketVars: GetTicketVariables = {
+  id: ..., 
+};
+
+// Call the `getTicket()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getTicket(getTicketVars);
+// Variables can be defined inline as well.
+const { data } = await getTicket({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getTicket(dataConnect, getTicketVars);
+
+console.log(data.ticket);
+
+// Or, you can use the `Promise` API.
+getTicket(getTicketVars).then((response) => {
+  const data = response.data;
+  console.log(data.ticket);
+});
+```
+
+### Using `GetTicket`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getTicketRef, GetTicketVariables } from '@promptwars/dataconnect';
+
+// The `GetTicket` query requires an argument of type `GetTicketVariables`:
+const getTicketVars: GetTicketVariables = {
+  id: ..., 
+};
+
+// Call the `getTicketRef()` function to get a reference to the query.
+const ref = getTicketRef(getTicketVars);
+// Variables can be defined inline as well.
+const ref = getTicketRef({ id: ..., });
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getTicketRef(dataConnect, getTicketVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.ticket);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.ticket);
+});
+```
+
+## GetSystemAlerts
+You can execute the `GetSystemAlerts` query using the following action shortcut function, or by calling `executeQuery()` after calling the following `QueryRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+getSystemAlerts(vars?: GetSystemAlertsVariables): QueryPromise<GetSystemAlertsData, GetSystemAlertsVariables>;
+
+interface GetSystemAlertsRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars?: GetSystemAlertsVariables): QueryRef<GetSystemAlertsData, GetSystemAlertsVariables>;
+}
+export const getSystemAlertsRef: GetSystemAlertsRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `QueryRef` function.
+```typescript
+getSystemAlerts(dc: DataConnect, vars?: GetSystemAlertsVariables): QueryPromise<GetSystemAlertsData, GetSystemAlertsVariables>;
+
+interface GetSystemAlertsRef {
+  ...
+  (dc: DataConnect, vars?: GetSystemAlertsVariables): QueryRef<GetSystemAlertsData, GetSystemAlertsVariables>;
+}
+export const getSystemAlertsRef: GetSystemAlertsRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the getSystemAlertsRef:
+```typescript
+const name = getSystemAlertsRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `GetSystemAlerts` query has an optional argument of type `GetSystemAlertsVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface GetSystemAlertsVariables {
+  eventId?: UUIDString | null;
+}
+```
+### Return Type
+Recall that executing the `GetSystemAlerts` query returns a `QueryPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `GetSystemAlertsData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface GetSystemAlertsData {
+  eventAlerts: ({
+    id: UUIDString;
+    type: string;
+    priority: string;
+    details: string;
+    timestamp: TimestampString;
+    status: string;
+    eventId?: UUIDString | null;
+  } & EmergencyEvent_Key)[];
+    communityAlerts: ({
+      id: UUIDString;
+      type: string;
+      priority: string;
+      details: string;
+      timestamp: TimestampString;
+      status: string;
+      eventId?: UUIDString | null;
+    } & EmergencyEvent_Key)[];
+}
+```
+### Using `GetSystemAlerts`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, getSystemAlerts, GetSystemAlertsVariables } from '@promptwars/dataconnect';
+
+// The `GetSystemAlerts` query has an optional argument of type `GetSystemAlertsVariables`:
+const getSystemAlertsVars: GetSystemAlertsVariables = {
+  eventId: ..., // optional
+};
+
+// Call the `getSystemAlerts()` function to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await getSystemAlerts(getSystemAlertsVars);
+// Variables can be defined inline as well.
+const { data } = await getSystemAlerts({ eventId: ..., });
+// Since all variables are optional for this query, you can omit the `GetSystemAlertsVariables` argument.
+const { data } = await getSystemAlerts();
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await getSystemAlerts(dataConnect, getSystemAlertsVars);
+
+console.log(data.eventAlerts);
+console.log(data.communityAlerts);
+
+// Or, you can use the `Promise` API.
+getSystemAlerts(getSystemAlertsVars).then((response) => {
+  const data = response.data;
+  console.log(data.eventAlerts);
+  console.log(data.communityAlerts);
+});
+```
+
+### Using `GetSystemAlerts`'s `QueryRef` function
+
+```typescript
+import { getDataConnect, executeQuery } from 'firebase/data-connect';
+import { connectorConfig, getSystemAlertsRef, GetSystemAlertsVariables } from '@promptwars/dataconnect';
+
+// The `GetSystemAlerts` query has an optional argument of type `GetSystemAlertsVariables`:
+const getSystemAlertsVars: GetSystemAlertsVariables = {
+  eventId: ..., // optional
+};
+
+// Call the `getSystemAlertsRef()` function to get a reference to the query.
+const ref = getSystemAlertsRef(getSystemAlertsVars);
+// Variables can be defined inline as well.
+const ref = getSystemAlertsRef({ eventId: ..., });
+// Since all variables are optional for this query, you can omit the `GetSystemAlertsVariables` argument.
+const ref = getSystemAlertsRef();
+
+// You can also pass in a `DataConnect` instance to the `QueryRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = getSystemAlertsRef(dataConnect, getSystemAlertsVars);
+
+// Call `executeQuery()` on the reference to execute the query.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeQuery(ref);
+
+console.log(data.eventAlerts);
+console.log(data.communityAlerts);
+
+// Or, you can use the `Promise` API.
+executeQuery(ref).then((response) => {
+  const data = response.data;
+  console.log(data.eventAlerts);
+  console.log(data.communityAlerts);
 });
 ```
 
@@ -2210,7 +2477,7 @@ The `UpsertUserProfile` mutation requires an argument of type `UpsertUserProfile
 
 ```typescript
 export interface UpsertUserProfileVariables {
-  id: string;
+  uid: string;
   name: string;
   age: number;
   idCardNumber: string;
@@ -2235,7 +2502,7 @@ import { connectorConfig, upsertUserProfile, UpsertUserProfileVariables } from '
 
 // The `UpsertUserProfile` mutation requires an argument of type `UpsertUserProfileVariables`:
 const upsertUserProfileVars: UpsertUserProfileVariables = {
-  id: ..., 
+  uid: ..., 
   name: ..., 
   age: ..., 
   idCardNumber: ..., 
@@ -2247,7 +2514,7 @@ const upsertUserProfileVars: UpsertUserProfileVariables = {
 // You can use the `await` keyword to wait for the promise to resolve.
 const { data } = await upsertUserProfile(upsertUserProfileVars);
 // Variables can be defined inline as well.
-const { data } = await upsertUserProfile({ id: ..., name: ..., age: ..., idCardNumber: ..., phone: ..., email: ..., });
+const { data } = await upsertUserProfile({ uid: ..., name: ..., age: ..., idCardNumber: ..., phone: ..., email: ..., });
 
 // You can also pass in a `DataConnect` instance to the action shortcut function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -2270,7 +2537,7 @@ import { connectorConfig, upsertUserProfileRef, UpsertUserProfileVariables } fro
 
 // The `UpsertUserProfile` mutation requires an argument of type `UpsertUserProfileVariables`:
 const upsertUserProfileVars: UpsertUserProfileVariables = {
-  id: ..., 
+  uid: ..., 
   name: ..., 
   age: ..., 
   idCardNumber: ..., 
@@ -2281,7 +2548,7 @@ const upsertUserProfileVars: UpsertUserProfileVariables = {
 // Call the `upsertUserProfileRef()` function to get a reference to the mutation.
 const ref = upsertUserProfileRef(upsertUserProfileVars);
 // Variables can be defined inline as well.
-const ref = upsertUserProfileRef({ id: ..., name: ..., age: ..., idCardNumber: ..., phone: ..., email: ..., });
+const ref = upsertUserProfileRef({ uid: ..., name: ..., age: ..., idCardNumber: ..., phone: ..., email: ..., });
 
 // You can also pass in a `DataConnect` instance to the `MutationRef` function.
 const dataConnect = getDataConnect(connectorConfig);
@@ -2297,6 +2564,118 @@ console.log(data.userProfile_upsert);
 executeMutation(ref).then((response) => {
   const data = response.data;
   console.log(data.userProfile_upsert);
+});
+```
+
+## ClaimTicket
+You can execute the `ClaimTicket` mutation using the following action shortcut function, or by calling `executeMutation()` after calling the following `MutationRef` function, both of which are defined in [dataconnect/index.d.ts](./index.d.ts):
+```typescript
+claimTicket(vars: ClaimTicketVariables): MutationPromise<ClaimTicketData, ClaimTicketVariables>;
+
+interface ClaimTicketRef {
+  ...
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ClaimTicketVariables): MutationRef<ClaimTicketData, ClaimTicketVariables>;
+}
+export const claimTicketRef: ClaimTicketRef;
+```
+You can also pass in a `DataConnect` instance to the action shortcut function or `MutationRef` function.
+```typescript
+claimTicket(dc: DataConnect, vars: ClaimTicketVariables): MutationPromise<ClaimTicketData, ClaimTicketVariables>;
+
+interface ClaimTicketRef {
+  ...
+  (dc: DataConnect, vars: ClaimTicketVariables): MutationRef<ClaimTicketData, ClaimTicketVariables>;
+}
+export const claimTicketRef: ClaimTicketRef;
+```
+
+If you need the name of the operation without creating a ref, you can retrieve the operation name by calling the `operationName` property on the claimTicketRef:
+```typescript
+const name = claimTicketRef.operationName;
+console.log(name);
+```
+
+### Variables
+The `ClaimTicket` mutation requires an argument of type `ClaimTicketVariables`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+
+```typescript
+export interface ClaimTicketVariables {
+  id: UUIDString;
+  userId: string;
+}
+```
+### Return Type
+Recall that executing the `ClaimTicket` mutation returns a `MutationPromise` that resolves to an object with a `data` property.
+
+The `data` property is an object of type `ClaimTicketData`, which is defined in [dataconnect/index.d.ts](./index.d.ts). It has the following fields:
+```typescript
+export interface ClaimTicketData {
+  ticket_update?: Ticket_Key | null;
+}
+```
+### Using `ClaimTicket`'s action shortcut function
+
+```typescript
+import { getDataConnect } from 'firebase/data-connect';
+import { connectorConfig, claimTicket, ClaimTicketVariables } from '@promptwars/dataconnect';
+
+// The `ClaimTicket` mutation requires an argument of type `ClaimTicketVariables`:
+const claimTicketVars: ClaimTicketVariables = {
+  id: ..., 
+  userId: ..., 
+};
+
+// Call the `claimTicket()` function to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await claimTicket(claimTicketVars);
+// Variables can be defined inline as well.
+const { data } = await claimTicket({ id: ..., userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the action shortcut function.
+const dataConnect = getDataConnect(connectorConfig);
+const { data } = await claimTicket(dataConnect, claimTicketVars);
+
+console.log(data.ticket_update);
+
+// Or, you can use the `Promise` API.
+claimTicket(claimTicketVars).then((response) => {
+  const data = response.data;
+  console.log(data.ticket_update);
+});
+```
+
+### Using `ClaimTicket`'s `MutationRef` function
+
+```typescript
+import { getDataConnect, executeMutation } from 'firebase/data-connect';
+import { connectorConfig, claimTicketRef, ClaimTicketVariables } from '@promptwars/dataconnect';
+
+// The `ClaimTicket` mutation requires an argument of type `ClaimTicketVariables`:
+const claimTicketVars: ClaimTicketVariables = {
+  id: ..., 
+  userId: ..., 
+};
+
+// Call the `claimTicketRef()` function to get a reference to the mutation.
+const ref = claimTicketRef(claimTicketVars);
+// Variables can be defined inline as well.
+const ref = claimTicketRef({ id: ..., userId: ..., });
+
+// You can also pass in a `DataConnect` instance to the `MutationRef` function.
+const dataConnect = getDataConnect(connectorConfig);
+const ref = claimTicketRef(dataConnect, claimTicketVars);
+
+// Call `executeMutation()` on the reference to execute the mutation.
+// You can use the `await` keyword to wait for the promise to resolve.
+const { data } = await executeMutation(ref);
+
+console.log(data.ticket_update);
+
+// Or, you can use the `Promise` API.
+executeMutation(ref).then((response) => {
+  const data = response.data;
+  console.log(data.ticket_update);
 });
 ```
 

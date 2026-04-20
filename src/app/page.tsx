@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function LandingPage() {
   return (
@@ -8,7 +9,7 @@ export default function LandingPage() {
       <nav className="fixed top-0 w-full z-50 bg-transparent backdrop-blur-md border-b-0 transition-colors duration-300">
         <div className="flex justify-between items-center px-8 py-6 w-full max-w-screen-2xl mx-auto">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-secondary" data-icon="radar" style={{ fontVariationSettings: "'FILL' 1" }}>radar</span>
+            <span className="material-symbols-outlined text-secondary" aria-hidden="true" style={{ fontVariationSettings: "'FILL' 1" }}>radar</span>
             <span className="text-2xl font-headline font-bold tracking-tighter text-slate-100 uppercase">Aether Venue OS</span>
           </div>
           <div className="hidden md:flex items-center gap-8 font-label text-sm uppercase tracking-[0.05em]">
@@ -32,10 +33,12 @@ export default function LandingPage() {
       <main className="flex-grow relative overflow-hidden bg-[size:40px_40px] bg-[linear-gradient(to_right,rgba(69,70,77,0.1)_1px,transparent_1px),linear-gradient(to_bottom,rgba(69,70,77,0.1)_1px,transparent_1px)]">
         {/* Hero Background Image/Gradient */}
         <div className="absolute inset-0 z-0 opacity-40 pointer-events-none flex items-center justify-center">
-          <img 
+          <Image 
             alt="Abstract 3D stadium visualization" 
             className="w-full h-full object-cover mix-blend-overlay" 
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuA-ubPjEUCY1AsOnN8vqiU9EmnqCn4lFbjZf5MXGAH5S5-UiB2FgW1eqbYXVZvXRhO5gIHVo5_s5vgSOK17Z9yWaZrUAfI1oePeYUX5rLIX5cBjA3OSCDrw97zfzdd38_nQ1eEZFGtmcJaHT_9OGGva7UYjLc3KRPb4KI8hym6GQfyytesc16xsrXqlWrs54k26S2xE4hH6J_BLdiFzR7xdIE2ou_A9hP7Exu8984LSDdjyUkkL15RYDJ9k4KzNXbfKnGl-DTWVcTxX"
+            fill
+            priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/80 to-transparent"></div>
         </div>

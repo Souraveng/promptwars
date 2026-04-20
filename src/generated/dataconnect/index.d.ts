@@ -10,6 +10,15 @@ export type DateString = string;
 
 
 
+export interface ClaimTicketData {
+  ticket_update?: Ticket_Key | null;
+}
+
+export interface ClaimTicketVariables {
+  id: UUIDString;
+  userId: string;
+}
+
 export interface CreateEventData {
   event_insert: Event_Key;
 }
@@ -136,19 +145,73 @@ export interface GetGuestTicketsVariables {
   userId: string;
 }
 
+export interface GetSystemAlertsData {
+  eventAlerts: ({
+    id: UUIDString;
+    type: string;
+    priority: string;
+    details: string;
+    timestamp: TimestampString;
+    status: string;
+    eventId?: UUIDString | null;
+  } & EmergencyEvent_Key)[];
+    communityAlerts: ({
+      id: UUIDString;
+      type: string;
+      priority: string;
+      details: string;
+      timestamp: TimestampString;
+      status: string;
+      eventId?: UUIDString | null;
+    } & EmergencyEvent_Key)[];
+}
+
+export interface GetSystemAlertsVariables {
+  eventId?: UUIDString | null;
+}
+
+export interface GetTicketData {
+  ticket?: {
+    id: UUIDString;
+    guestName: string;
+    guestEmail: string;
+    guestAge: number;
+    guestMobile: string;
+    guestIdNumber: string;
+    gate: string;
+    section: string;
+    row: string;
+    seat: string;
+    issuedAt: TimestampString;
+    status: string;
+    eventId: UUIDString;
+    event: {
+      id: UUIDString;
+      title: string;
+      venueName: string;
+      startTime: TimestampString;
+      isActive: boolean;
+    } & Event_Key;
+  } & Ticket_Key;
+}
+
+export interface GetTicketVariables {
+  id: UUIDString;
+}
+
 export interface GetUserProfileData {
-  userProfile?: {
-    id: string;
+  userProfiles: ({
+    uid: string;
     name: string;
     age: number;
     idCardNumber: string;
     phone: string;
     email: string;
-  } & UserProfile_Key;
+  } & UserProfile_Key)[];
 }
 
 export interface GetUserProfileVariables {
-  id: string;
+  uid: string;
 }
 
 export interface GetVenueLayoutData {
@@ -273,7 +336,7 @@ export interface UpsertUserProfileData {
 }
 
 export interface UpsertUserProfileVariables {
-  id: string;
+  uid: string;
   name: string;
   age: number;
   idCardNumber: string;
@@ -282,7 +345,7 @@ export interface UpsertUserProfileVariables {
 }
 
 export interface UserProfile_Key {
-  id: string;
+  uid: string;
   __typename?: 'UserProfile_Key';
 }
 
@@ -423,6 +486,18 @@ export const upsertUserProfileRef: UpsertUserProfileRef;
 export function upsertUserProfile(vars: UpsertUserProfileVariables): MutationPromise<UpsertUserProfileData, UpsertUserProfileVariables>;
 export function upsertUserProfile(dc: DataConnect, vars: UpsertUserProfileVariables): MutationPromise<UpsertUserProfileData, UpsertUserProfileVariables>;
 
+interface ClaimTicketRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: ClaimTicketVariables): MutationRef<ClaimTicketData, ClaimTicketVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: ClaimTicketVariables): MutationRef<ClaimTicketData, ClaimTicketVariables>;
+  operationName: string;
+}
+export const claimTicketRef: ClaimTicketRef;
+
+export function claimTicket(vars: ClaimTicketVariables): MutationPromise<ClaimTicketData, ClaimTicketVariables>;
+export function claimTicket(dc: DataConnect, vars: ClaimTicketVariables): MutationPromise<ClaimTicketData, ClaimTicketVariables>;
+
 interface ListEventsRef {
   /* Allow users to create refs without passing in DataConnect */
   (): QueryRef<ListEventsData, undefined>;
@@ -518,4 +593,28 @@ export const getGuestTicketsRef: GetGuestTicketsRef;
 
 export function getGuestTickets(vars: GetGuestTicketsVariables): QueryPromise<GetGuestTicketsData, GetGuestTicketsVariables>;
 export function getGuestTickets(dc: DataConnect, vars: GetGuestTicketsVariables): QueryPromise<GetGuestTicketsData, GetGuestTicketsVariables>;
+
+interface GetTicketRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars: GetTicketVariables): QueryRef<GetTicketData, GetTicketVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars: GetTicketVariables): QueryRef<GetTicketData, GetTicketVariables>;
+  operationName: string;
+}
+export const getTicketRef: GetTicketRef;
+
+export function getTicket(vars: GetTicketVariables): QueryPromise<GetTicketData, GetTicketVariables>;
+export function getTicket(dc: DataConnect, vars: GetTicketVariables): QueryPromise<GetTicketData, GetTicketVariables>;
+
+interface GetSystemAlertsRef {
+  /* Allow users to create refs without passing in DataConnect */
+  (vars?: GetSystemAlertsVariables): QueryRef<GetSystemAlertsData, GetSystemAlertsVariables>;
+  /* Allow users to pass in custom DataConnect instances */
+  (dc: DataConnect, vars?: GetSystemAlertsVariables): QueryRef<GetSystemAlertsData, GetSystemAlertsVariables>;
+  operationName: string;
+}
+export const getSystemAlertsRef: GetSystemAlertsRef;
+
+export function getSystemAlerts(vars?: GetSystemAlertsVariables): QueryPromise<GetSystemAlertsData, GetSystemAlertsVariables>;
+export function getSystemAlerts(dc: DataConnect, vars?: GetSystemAlertsVariables): QueryPromise<GetSystemAlertsData, GetSystemAlertsVariables>;
 

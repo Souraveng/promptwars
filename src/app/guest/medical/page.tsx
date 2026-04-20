@@ -3,9 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLocation } from '@/hooks/useLocation';
-import { dataconnect } from '@/lib/firebase-client';
+import { dataconnect, GOOGLE_MAPS_API_KEY } from '@/lib/firebase-client';
 import { mutationRef, executeMutation, executeQuery, queryRef } from 'firebase/data-connect';
 import { GetActiveEventData, LogEmergencyEventVariables } from '@/types/dataconnect';
+import { GoogleGenAI } from '@google/genai';
+import { formatTriagePrompt, parseAiAdvice, getFallbackAdvice } from '@/lib/logic/medical-logic';
 
 export default function GuestMedicalPage() {
   const router = useRouter();
@@ -13,11 +15,13 @@ export default function GuestMedicalPage() {
   const [isTriggered, setIsTriggered] = React.useState(false);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [activeEventId, setActiveEventId] = useState<string | null>(null);
+  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+  const [isAiLoading, setIsAiLoading] = useState(false);
 
   useEffect(() => {
     const fetchActiveEvent = async () => {
       try {
-        const qRef = queryRef<GetActiveEventData, {}>(dataconnect, 'GetActiveEvent', {});
+        const qRef = queryRef<GetActiveEventData, Record<string, never>>(dataconnect, 'GetActiveEvent', {});
         const result = await executeQuery(qRef);
         if (result.data?.events && result.data.events.length > 0) {
           setActiveEventId(result.data.events[0].id);
@@ -29,6 +33,26 @@ export default function GuestMedicalPage() {
     fetchActiveEvent();
   }, []);
 
+  const getAiFirstAidAdvice = async (symptoms: string[]) => {
+    setIsAiLoading(true);
+    try {
+      const client = new GoogleGenAI({ apiKey: GOOGLE_MAPS_API_KEY });
+      const prompt = formatTriagePrompt(symptoms);
+
+      const response = await client.models.generateContent({
+        model: 'gemini-1.5-flash',
+        contents: [{ role: 'user', parts: [{ text: prompt }] }]
+      });
+      
+      setAiAdvice(response.text || getFallbackAdvice());
+    } catch (err) {
+      console.error('AI Triage Error:', err);
+      setAiAdvice(getFallbackAdvice());
+    } finally {
+      setIsAiLoading(false);
+    }
+  };
+
   const handleTrigger = async () => {
     if (selectedIds.length === 0 || isTriggered) return;
     setIsTriggered(true);
@@ -37,6 +61,9 @@ export default function GuestMedicalPage() {
     if (typeof window !== 'undefined' && window.navigator.vibrate) {
       window.navigator.vibrate([200, 100, 200]);
     }
+
+    // Call AI Triage in background
+    getAiFirstAidAdvice(selectedIds);
 
     try {
       // 1. Get Live Location
@@ -122,17 +149,49 @@ export default function GuestMedicalPage() {
   return (
     <div className="bg-surface font-body text-on-surface selection:bg-primary-container min-h-screen w-full flex flex-col relative overflow-x-hidden">
       {/* Top Tactical Header */}
-      <header className="fixed top-0 w-full z-30 bg-[#0B1326]/60 backdrop-blur-md flex justify-between items-center h-16 px-6 shadow-[0_1px_0_0_rgba(219,226,253,0.05)]">
+      <header className="fixed top-0 w-full z-30 bg-[#0B1326]/60 backdrop-blur-md flex justify-between items-center h-16 px-6 shadow-[0_1px_0_0_rgba(219,226,253,0.05)]" role="banner">
         <div className="flex items-center gap-3">
-          <span className={`material-symbols-outlined ${isTriggered ? 'text-tertiary animate-pulse' : 'text-primary'}`} data-icon="medical_services">medical_services</span>
-          <span className="text-sm font-bold tracking-[0.2em] text-[#DBE2FD] font-headline uppercase">
+          <span className={`material-symbols-outlined ${isTriggered ? 'text-tertiary animate-pulse' : 'text-primary'}`} aria-hidden="true">medical_services</span>
+          <h1 className="text-sm font-bold tracking-[0.2em] text-[#DBE2FD] font-headline uppercase">
             {isTriggered ? 'Emergency Activated' : 'Medical Triage'}
-          </span>
+          </h1>
         </div>
         <div className="font-headline uppercase tracking-widest text-xs text-[#DBE2FD]/60">SENTINEL LENS</div>
       </header>
 
       <main className="flex-1 flex flex-col pt-20 pb-24 px-6 relative overflow-y-auto scroll-smooth">
+        
+        {isTriggered && (
+          <section className="animate-in fade-in slide-in-from-top-4 duration-500 mb-6" aria-labelledby="ai-triage-title">
+            <div className="glass-card p-6 rounded-2xl border-2 border-primary/30 bg-primary/5 relative overflow-hidden" role="region" aria-live="polite">
+              <div className="absolute top-0 right-0 p-4">
+                <span className="material-symbols-outlined text-primary animate-spin text-sm" aria-hidden="true" style={{ display: isAiLoading ? 'block' : 'none' }}>sync</span>
+              </div>
+              <h2 id="ai-triage-title" className="font-headline text-sm font-black uppercase tracking-widest text-primary mb-3 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm" aria-hidden="true">psychiatry</span>
+                AI Triage Protocols
+              </h2>
+              {aiAdvice ? (
+                <div className="space-y-2">
+                  {parseAiAdvice(aiAdvice).map((line, i) => (
+                    <p key={i} className="text-[12px] font-bold text-on-surface flex items-start gap-2">
+                      <span className="text-primary mt-0.5" aria-hidden="true">»</span>
+                      {line}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <div className="h-20 flex flex-col items-center justify-center gap-2" role="status" aria-label="Analyzing symptoms">
+                   <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-primary animate-shimmer" style={{ width: '60%' }}></div>
+                   </div>
+                   <p className="text-[10px] font-black uppercase tracking-tighter opacity-40">Analyzing Symptoms...</p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* Telemetry Grid */}
         <section className="grid grid-cols-2 gap-4 mb-6">
           <div className="glass-card p-4 rounded-xl border border-white/5">
@@ -162,16 +221,18 @@ export default function GuestMedicalPage() {
         </section>
 
         {/* Option Grid */}
-        <section className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 transition-all`}>
+        <section className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 transition-all`} aria-label="Medical categories">
           {categories.map((cat) => {
             const isSelected = selectedIds.includes(cat.id);
             return (
-              <div 
+              <button 
                 key={cat.id}
                 onClick={() => toggleSelection(cat.id)}
-                className={`${cat.colSpan} glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col justify-between group cursor-pointer transition-all border ${isSelected ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 'border-white/5'} ${isTriggered && !isSelected ? 'opacity-30 pointer-events-none' : ''} active:scale-95`}
+                aria-pressed={isSelected}
+                aria-label={`${cat.title}: ${cat.desc}. Priority ${cat.priority}`}
+                className={`${cat.colSpan} glass-card p-6 rounded-2xl relative overflow-hidden flex flex-col justify-between group text-left transition-all border ${isSelected ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_rgba(59,130,246,0.1)]' : 'border-white/5'} ${isTriggered && !isSelected ? 'opacity-30 pointer-events-none' : ''} active:scale-95`}
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16"></div>
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -mr-16 -mt-16" aria-hidden="true"></div>
                 
                 {/* Selection Dot */}
                 <div className="absolute top-4 right-4 flex items-center justify-center">
@@ -181,14 +242,14 @@ export default function GuestMedicalPage() {
                 </div>
 
                 <div className="flex justify-between items-start z-10 mb-8">
-                  <span className={`material-symbols-outlined text-${cat.color} text-4xl`} data-icon={cat.icon}>{cat.icon}</span>
+                  <span className={`material-symbols-outlined text-${cat.color} text-4xl`} aria-hidden="true">{cat.icon}</span>
                   <span className={`font-label text-[10px] px-2 py-1 rounded bg-${cat.color}/10 text-${cat.color}`}>{cat.priority}</span>
                 </div>
                 <div className="z-10">
                   <h3 className="font-headline text-xl font-bold mb-1">{cat.title}</h3>
                   <p className="font-body text-xs text-on-surface-variant leading-relaxed">{cat.desc}</p>
                 </div>
-              </div>
+              </button>
             );
           })}
         </section>

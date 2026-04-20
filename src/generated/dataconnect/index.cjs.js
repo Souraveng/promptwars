@@ -139,6 +139,18 @@ exports.upsertUserProfile = function upsertUserProfile(dcOrVars, vars) {
   return executeMutation(upsertUserProfileRef(dcOrVars, vars));
 };
 
+const claimTicketRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return mutationRef(dcInstance, 'ClaimTicket', inputVars);
+}
+claimTicketRef.operationName = 'ClaimTicket';
+exports.claimTicketRef = claimTicketRef;
+
+exports.claimTicket = function claimTicket(dcOrVars, vars) {
+  return executeMutation(claimTicketRef(dcOrVars, vars));
+};
+
 const listEventsRef = (dc) => {
   const { dc: dcInstance} = validateArgs(connectorConfig, dc, undefined);
   dcInstance._useGeneratedSdk();
@@ -233,4 +245,28 @@ exports.getGuestTicketsRef = getGuestTicketsRef;
 
 exports.getGuestTickets = function getGuestTickets(dcOrVars, vars) {
   return executeQuery(getGuestTicketsRef(dcOrVars, vars));
+};
+
+const getTicketRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars, true);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetTicket', inputVars);
+}
+getTicketRef.operationName = 'GetTicket';
+exports.getTicketRef = getTicketRef;
+
+exports.getTicket = function getTicket(dcOrVars, vars) {
+  return executeQuery(getTicketRef(dcOrVars, vars));
+};
+
+const getSystemAlertsRef = (dcOrVars, vars) => {
+  const { dc: dcInstance, vars: inputVars} = validateArgs(connectorConfig, dcOrVars, vars);
+  dcInstance._useGeneratedSdk();
+  return queryRef(dcInstance, 'GetSystemAlerts', inputVars);
+}
+getSystemAlertsRef.operationName = 'GetSystemAlerts';
+exports.getSystemAlertsRef = getSystemAlertsRef;
+
+exports.getSystemAlerts = function getSystemAlerts(dcOrVars, vars) {
+  return executeQuery(getSystemAlertsRef(dcOrVars, vars));
 };

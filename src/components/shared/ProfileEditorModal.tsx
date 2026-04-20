@@ -52,15 +52,19 @@ export default function ProfileEditorModal({ isOpen, onClose }: ProfileEditorMod
         setSuccess(false);
         onClose();
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || 'Update failed');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Update failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex justify-center items-start p-4 pt-12 md:pt-24 overflow-y-auto custom-scrollbar">
+    <div className="fixed inset-0 z-[100] flex justify-center items-start p-4 pt-12 md:pt-24 overflow-y-auto custom-scrollbar"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modal-title"
+    >
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-[#060D20]/95 backdrop-blur-xl animate-in fade-in" 
@@ -73,14 +77,18 @@ export default function ProfileEditorModal({ isOpen, onClose }: ProfileEditorMod
         {/* Header (Sticky) */}
         <div className="p-8 border-b border-outline-variant/10 flex justify-between items-center bg-primary/5 shrink-0">
            <div>
-              <h2 className="font-headline text-xl font-black italic tracking-tighter text-on-surface uppercase leading-none">Operative Credentials</h2>
+              <h2 id="modal-title" className="font-headline text-xl font-black italic tracking-tighter text-on-surface uppercase leading-none">Operative Credentials</h2>
               <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] mt-1 opacity-60 relative flex items-center gap-2">
-                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" aria-hidden="true" />
                  Tactical Identity Terminal
               </p>
            </div>
-           <button onClick={onClose} className="w-10 h-10 rounded-full hover:bg-white/5 transition-colors flex items-center justify-center text-on-surface-variant">
-              <span className="material-symbols-outlined">close</span>
+           <button 
+             onClick={onClose} 
+             aria-label="Close Profile Editor"
+             className="w-10 h-10 rounded-full hover:bg-white/5 transition-colors flex items-center justify-center text-on-surface-variant"
+           >
+              <span className="material-symbols-outlined" aria-hidden="true">close</span>
            </button>
         </div>
 
@@ -100,35 +108,37 @@ export default function ProfileEditorModal({ isOpen, onClose }: ProfileEditorMod
               <div className="space-y-1.5 opacity-50 pointer-events-none">
                  <label className="text-[9px] uppercase tracking-[0.2em] font-black text-on-surface-variant/60 ml-1">Authenticated Email</label>
                  <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/40 text-base">verified</span>
-                    <input disabled value={formData.email} className="w-full bg-surface-container/10 border border-outline-variant/10 rounded-xl py-3 pl-10 pr-4 text-[12px] font-mono" />
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/40 text-base" aria-hidden="true">verified</span>
+                    <input disabled value={formData.email} aria-disabled="true" className="w-full bg-surface-container/10 border border-outline-variant/10 rounded-xl py-3 pl-10 pr-4 text-[12px] font-mono" />
                  </div>
               </div>
            </div>
 
-           {error && (
-             <div className="p-4 bg-error/5 border border-error/20 rounded-xl flex items-start gap-3">
-                <span className="material-symbols-outlined text-error text-lg">warning</span>
-                <p className="text-[10px] text-error font-bold uppercase tracking-tight">{error}</p>
-             </div>
-           )}
+           <div aria-live="polite">
+             {error && (
+               <div className="p-4 bg-error/5 border border-error/20 rounded-xl flex items-start gap-3">
+                  <span className="material-symbols-outlined text-error text-lg" aria-hidden="true">warning</span>
+                  <p className="text-[10px] text-error font-bold uppercase tracking-tight">{error}</p>
+               </div>
+             )}
 
-           {success && (
-             <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl flex items-center gap-3">
-                <span className="material-symbols-outlined text-primary text-xl">check_circle</span>
-                <p className="text-[10px] text-primary font-black uppercase tracking-widest leading-none">Profile Synchronized Successfully</p>
-             </div>
-           )}
+             {success && (
+               <div className="p-4 bg-primary/10 border border-primary/20 rounded-xl flex items-center gap-3">
+                  <span className="material-symbols-outlined text-primary text-xl" aria-hidden="true">check_circle</span>
+                  <p className="text-[10px] text-primary font-black uppercase tracking-widest leading-none">Profile Synchronized Successfully</p>
+               </div>
+             )}
+           </div>
 
            <button 
              disabled={loading || success}
              className="w-full py-5 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-[0.2em] text-[12px] shadow-[0_16px_48px_rgba(var(--color-primary-rgb),0.2)] hover:scale-[1.02] active:scale-95 disabled:opacity-30 disabled:grayscale transition-all flex items-center justify-center gap-3"
            >
               {loading ? (
-                <span className="material-symbols-outlined animate-spin">sync</span>
+                <span className="material-symbols-outlined animate-spin" aria-hidden="true">sync</span>
               ) : (
                 <>
-                  <span className="material-symbols-outlined text-lg">save_as</span>
+                  <span className="material-symbols-outlined text-lg" aria-hidden="true">save_as</span>
                   Commit Identity Updates
                 </>
               )}
@@ -154,12 +164,14 @@ interface FieldProps {
 }
 
 function Field({ label, type = 'text', icon, value, onChange, required, placeholder }: FieldProps) {
+  const id = `field-${label.toLowerCase().replace(/\s+/g, '-')}`;
   return (
     <div className="space-y-1.5 flex-1">
-      <label className="text-[9px] uppercase tracking-[0.2em] font-black text-on-surface-variant/60 ml-1">{label}</label>
+      <label htmlFor={id} className="text-[9px] uppercase tracking-[0.2em] font-black text-on-surface-variant/60 ml-1">{label}</label>
       <div className="relative">
-        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-base opacity-60">{icon}</span>
+        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary text-base opacity-60" aria-hidden="true">{icon}</span>
         <input 
+          id={id}
           type={type}
           value={value}
           onChange={e => onChange(e.target.value)}
@@ -171,3 +183,4 @@ function Field({ label, type = 'text', icon, value, onChange, required, placehol
     </div>
   );
 }
+

@@ -38,7 +38,7 @@ export interface VenueLayout {
 }
 
 export interface UserProfile {
-  id: string;
+  uid: string;
   name: string;
   age: number;
   idCardNumber: string;
@@ -97,7 +97,11 @@ export interface IssueTicketVariables {
 }
 
 export interface GetUserProfileData {
-  userProfile: UserProfile | null;
+  userProfiles: UserProfile[];
+}
+
+export interface GetUserProfileVariables {
+  uid: string;
 }
 
 export interface GetGuestTicketsData {
@@ -105,7 +109,7 @@ export interface GetGuestTicketsData {
 }
 
 export interface UpsertUserProfileVariables {
-  id: string;
+  uid: string;
   name: string;
   age: number;
   idCardNumber: string;

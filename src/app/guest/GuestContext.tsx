@@ -36,7 +36,7 @@ export function GuestProvider({ children }: { children: React.ReactNode }) {
     try {
       // Parallel Execution for Efficiency
       const [pRef, tRef] = await Promise.all([
-        queryRef<GetUserProfileData, { id: string }>(dataconnect, 'GetUserProfile', { id: uid }),
+        queryRef<GetUserProfileData, { uid: string }>(dataconnect, 'GetUserProfile', { uid: uid }),
         queryRef<GetGuestTicketsData, { userId: string }>(dataconnect, 'GetGuestTickets', { userId: uid })
       ]);
 
@@ -45,10 +45,10 @@ export function GuestProvider({ children }: { children: React.ReactNode }) {
         executeQuery(tRef)
       ]);
 
-      const userProfile = pResult.data?.userProfile || null;
+      const userProfile = pResult.data?.userProfiles?.[0] || null;
       const guestTickets = tResult.data?.tickets || [];
 
-      setProfile(userProfile);
+      setProfile(userProfile as any);
       setTickets(guestTickets);
 
       // Restore active ticket from session storage

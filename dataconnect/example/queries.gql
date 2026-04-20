@@ -84,9 +84,9 @@ query ListTickets($eventId: UUID) @auth(level: PUBLIC) {
   }
 }
 
-query GetUserProfile($id: String!) @auth(level: USER) {
-  userProfile(id: $id) {
-    id
+query GetUserProfile($uid: String!) @auth(level: USER) {
+  userProfiles(where: { uid: { eq: $uid } }) {
+    uid
     name
     age
     idCardNumber

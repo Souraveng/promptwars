@@ -44,3 +44,8 @@ next-env.d.ts
 *-debug.log
 .firebase/
 .dataconnect/
+
+# code base
+project.txt
+
+code_base.py

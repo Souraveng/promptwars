@@ -107,11 +107,11 @@ export default function GuestSOSPage() {
       await executeMutation(ref);
       
       console.log('SOS logged successfully with location:', coords);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Failed to log SOS:', err);
       // Even if location fails, we could log with null lat/lng if the schema allows
       try {
-        const fallbackRef = mutationRef<any, LogEmergencyEventVariables>(dataconnect, 'LogEmergencyEvent', {
+        const fallbackRef = mutationRef<unknown, LogEmergencyEventVariables>(dataconnect, 'LogEmergencyEvent', {
           type: 'SOS TRIGGERED',
           priority: 'HIGH',
           details: `CRITICAL_SOS_SIGNAL (NO_LOCATION)${isMock ? ' [MOCK_FAIL]' : ''}`,
@@ -129,7 +129,7 @@ export default function GuestSOSPage() {
       {/* Top Navigation Anchor - Sentinel Lens Tactical Branding */}
       <header className="fixed top-0 w-full z-50 bg-[#0B1326]/60 backdrop-blur-md flex justify-between items-center h-16 px-6 shadow-[0_1px_0_0_rgba(219,226,253,0.05)]">
         <div className="flex items-center gap-3">
-          <span className="material-symbols-outlined text-[#3B82F6]" data-icon="radar">radar</span>
+          <span className="material-symbols-outlined text-[#3B82F6]" aria-hidden="true">radar</span>
           <span className="text-sm font-bold tracking-[0.2em] text-[#DBE2FD] font-headline uppercase">Sentinel Lens</span>
         </div>
         <div className="font-headline uppercase tracking-widest text-xs text-[#DBE2FD]/60">
@@ -140,7 +140,7 @@ export default function GuestSOSPage() {
       {/* Main Tactical Canvas */}
       <main className="flex-1 flex flex-col pt-20 pb-24 px-6 relative overflow-y-auto scroll-smooth">
         {/* Background Ambient Element */}
-        <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <div className="absolute inset-0 opacity-10 pointer-events-none" aria-hidden="true">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-tertiary rounded-full blur-[120px]"></div>
         </div>
         
@@ -162,11 +162,11 @@ export default function GuestSOSPage() {
         <div className="flex-1 flex flex-col items-center justify-center relative">
           <div className="relative group">
             {/* Outer Rings */}
-            <div className={`absolute inset-0 -m-8 border border-tertiary/20 rounded-full ${isHolding || isTriggered ? 'animate-ping' : 'animate-pulse'}`}></div>
-            <div className={`absolute inset-0 -m-4 border border-tertiary/40 rounded-full ${isHolding ? 'scale-110' : ''} transition-transform duration-500`}></div>
+            <div className={`absolute inset-0 -m-8 border border-tertiary/20 rounded-full ${isHolding || isTriggered ? 'animate-ping' : 'animate-pulse'}`} aria-hidden="true"></div>
+            <div className={`absolute inset-0 -m-4 border border-tertiary/40 rounded-full ${isHolding ? 'scale-110' : ''} transition-transform duration-500`} aria-hidden="true"></div>
             
             {/* Hold progress ring overlay */}
-            <svg className="absolute inset-0 -m-4 w-[calc(100%+2rem)] h-[calc(100%+2rem)] -rotate-90">
+            <svg className="absolute inset-0 -m-4 w-[calc(100%+2rem)] h-[calc(100%+2rem)] -rotate-90" aria-hidden="true">
               <circle
                 cx="50%"
                 cy="50%"
@@ -182,32 +182,33 @@ export default function GuestSOSPage() {
             </svg>
 
             {/* Main Glass Trigger */}
-            <div 
+            <button 
               onMouseDown={startHolding}
               onMouseUp={stopHolding}
               onMouseLeave={stopHolding}
               onTouchStart={startHolding}
               onTouchEnd={stopHolding}
               onClick={handleTrigger}
+              aria-label={isTriggered ? "Emergency Signal Sent" : `Hold for 3 seconds to trigger SOS. Current progress ${Math.round(progress)}%`}
               className={`relative w-64 h-64 rounded-full glass-card flex items-center justify-center sos-glow overflow-hidden cursor-pointer select-none transition-all duration-300 ${isHolding ? 'scale-95' : 'active:scale-95'} ${isTriggered ? 'bg-tertiary text-on-tertiary shadow-[0_0_80px_rgba(244,63,94,0.6)]' : ''}`}
             >
-              <div className="scanning-line"></div>
+              <div className="scanning-line" aria-hidden="true"></div>
               <div className="flex flex-col items-center gap-1 z-10">
                 <span className={`font-headline text-6xl font-extrabold tracking-tighter transition-colors ${isTriggered ? 'text-on-tertiary' : 'text-tertiary'}`}>SOS</span>
                 <span className={`font-label text-[10px] uppercase tracking-widest transition-opacity ${isTriggered ? 'opacity-100 font-bold' : 'text-tertiary/80'}`}>
                   {isTriggered ? "DISPATCHED" : isHolding ? "SIGNALING..." : "Tap or Hold"}
                 </span>
               </div>
-            </div>
+            </button>
           </div>
 
           {/* Coordinate Telemetry */}
-          <div className={`mt-12 text-center transition-all duration-700 ${isTriggered ? 'scale-110' : ''}`}>
+          <div className={`mt-12 text-center transition-all duration-700 ${isTriggered ? 'scale-110' : ''}`} aria-live="polite">
             <div className={`font-headline text-2xl font-medium tracking-widest transition-colors ${isTriggered ? 'text-tertiary' : 'text-on-surface'}`}>
               {lat ? `${lat.toFixed(6)}° N` : 'LAT LOCKING...'} | {lng ? `${lng.toFixed(6)}° W` : 'LNG LOCKING...'}
             </div>
             <div className="mt-2 font-label text-[10px] uppercase tracking-[0.3em] text-on-surface-variant flex items-center justify-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${lat ? 'bg-secondary' : 'animate-pulse bg-tertiary'}`}></span>
+              <span className={`w-2 h-2 rounded-full ${lat ? 'bg-secondary' : 'animate-pulse bg-tertiary'}`} aria-hidden="true"></span>
               Tracking Terminal ID: SENT-99-AX
             </div>
           </div>
@@ -217,30 +218,34 @@ export default function GuestSOSPage() {
         <div className={`mt-auto grid grid-cols-4 gap-3 transition-opacity duration-500 ${isTriggered ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
           <button 
             onClick={() => router.push('/guest/medical')}
+            aria-label="Medical Assistance"
             className="glass-card aspect-square rounded-xl flex flex-col items-center justify-center border border-tertiary/5 hover:border-tertiary/40 transition-all group"
           >
-            <span className="material-symbols-outlined text-tertiary mb-2 text-2xl" data-icon="medical_services">medical_services</span>
+            <span className="material-symbols-outlined text-tertiary mb-2 text-2xl" aria-hidden="true">medical_services</span>
             <span className="font-label text-[9px] uppercase font-bold tracking-tighter text-on-surface-variant group-hover:text-tertiary transition-colors">Medical</span>
           </button>
           <button 
             onClick={() => router.push('/guest/security')}
+            aria-label="Security Assistance"
             className="glass-card aspect-square rounded-xl flex flex-col items-center justify-center border border-tertiary/5 hover:border-tertiary/40 transition-all group"
           >
-            <span className="material-symbols-outlined text-tertiary mb-2 text-2xl" data-icon="policy">policy</span>
+            <span className="material-symbols-outlined text-tertiary mb-2 text-2xl" aria-hidden="true">policy</span>
             <span className="font-label text-[9px] uppercase font-bold tracking-tighter text-on-surface-variant group-hover:text-tertiary transition-colors">Security</span>
           </button>
           <button 
             onClick={() => router.push('/guest/spill')}
+            aria-label="Report Spill"
             className="glass-card aspect-square rounded-xl flex flex-col items-center justify-center border border-tertiary/5 hover:border-tertiary/40 transition-all group"
           >
-            <span className="material-symbols-outlined text-tertiary mb-2 text-2xl" data-icon="cleaning_services">cleaning_services</span>
+            <span className="material-symbols-outlined text-tertiary mb-2 text-2xl" aria-hidden="true">cleaning_services</span>
             <span className="font-label text-[9px] uppercase font-bold tracking-tighter text-on-surface-variant group-hover:text-tertiary transition-colors">Spill</span>
           </button>
           <button 
             onClick={() => router.push('/guest/staff')}
+            aria-label="Contact Staff"
             className="glass-card aspect-square rounded-xl flex flex-col items-center justify-center border border-tertiary/5 hover:border-tertiary/40 transition-all group"
           >
-            <span className="material-symbols-outlined text-tertiary mb-2 text-2xl" data-icon="support_agent">support_agent</span>
+            <span className="material-symbols-outlined text-tertiary mb-2 text-2xl" aria-hidden="true">support_agent</span>
             <span className="font-label text-[9px] uppercase font-bold tracking-tighter text-on-surface-variant group-hover:text-tertiary transition-colors">Staff</span>
           </button>
         </div>
@@ -252,7 +257,7 @@ export default function GuestSOSPage() {
           onClick={() => router.push('/guest/dashboard')}
           className="flex flex-col items-center justify-center text-[#DBE2FD]/40 active:scale-90 transition-all duration-300"
         >
-          <span className="material-symbols-outlined mb-1" data-icon="close">close</span>
+          <span className="material-symbols-outlined mb-1" aria-hidden="true">close</span>
           <span className="font-body text-[10px] font-bold uppercase tracking-tighter">
             {isTriggered ? "End Signal" : "Cancel Signal"}
           </span>
@@ -261,13 +266,14 @@ export default function GuestSOSPage() {
           onClick={() => router.push('/guest/alerts')}
           className="flex flex-col items-center justify-center text-[#3B82F6] drop-shadow-[0_0_10px_rgba(59,130,246,0.6)] active:scale-90 transition-all duration-300"
         >
-          <span className="material-symbols-outlined mb-1" data-icon="notifications">notifications</span>
+          <span className="material-symbols-outlined mb-1" aria-hidden="true">notifications</span>
           <span className="font-body text-[10px] font-bold uppercase tracking-tighter">Alerts</span>
         </button>
       </div>
 
       {/* Background texture and overlay */}
-      <div className="fixed inset-0 z-[-1] pointer-events-none opacity-[0.03]" data-alt="fine digital noise and grid overlay for a high-tech tactical operating system interface"></div>
+      <div className="fixed inset-0 z-[-1] pointer-events-none opacity-[0.03]" aria-hidden="true"></div>
     </div>
   );
 }
+

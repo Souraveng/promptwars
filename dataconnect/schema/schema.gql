@@ -43,8 +43,8 @@ type Ticket @table {
   userId: String # Links to UserProfile.id (Firebase UID)
 }
 
-type UserProfile @table(key: ["id"]) {
-  id: String! # Firebase UID
+type UserProfile @table(key: ["uid"]) {
+  uid: String! # Firebase UID
   name: String!
   age: Int!
   idCardNumber: String!

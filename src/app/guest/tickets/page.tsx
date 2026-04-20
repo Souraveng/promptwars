@@ -116,7 +116,7 @@ export default function GuestTicketPage() {
            <h1 className="font-headline text-2xl font-bold">Tactical Portfolio</h1>
            <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-[0.2em] mt-1 opacity-60">Manage your active deployment contexts</p>
          </div>
-         <div className="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-outline-variant/10">
+         <div className="flex items-center gap-2 px-3 py-1 bg-surface-container rounded-full border border-outline-variant/10" aria-label={`Showing pass ${currentIndex + 1} of ${tickets.length}`}>
             <span className="text-[10px] font-black text-primary uppercase tracking-widest">{currentIndex + 1} / {tickets.length}</span>
             <span className="text-[10px] font-bold text-on-surface-variant/40 uppercase tracking-widest">DEPLOYMENTS</span>
          </div>
@@ -125,8 +125,12 @@ export default function GuestTicketPage() {
       <div className="relative w-full flex flex-col items-center gap-8">
         <div className="w-full flex items-center justify-center gap-4">
           {tickets.length > 1 && (
-             <button onClick={handlePrev} className="hidden md:flex w-12 h-12 items-center justify-center rounded-full bg-surface-container border border-outline-variant/10 hover:bg-primary/20 hover:text-primary transition-all">
-                <span className="material-symbols-outlined">chevron_left</span>
+             <button 
+              onClick={handlePrev} 
+              aria-label="Previous Ticket"
+              className="hidden md:flex w-12 h-12 items-center justify-center rounded-full bg-surface-container border border-outline-variant/10 hover:bg-primary/20 hover:text-primary transition-all"
+             >
+                <span className="material-symbols-outlined" aria-hidden="true">chevron_left</span>
              </button>
           )}
 
@@ -134,6 +138,7 @@ export default function GuestTicketPage() {
             <div ref={printRef}
               className="bg-white rounded-[2.5rem] border-2 border-black/5 shadow-[0_32px_128px_rgba(0,0,0,0.1)] p-8 flex flex-col items-center relative overflow-hidden"
               style={{ fontFamily: 'Inter, sans-serif', width: '340px', minHeight: '520px' }}
+              aria-label={`Ticket for ${currentTicket.event?.title}`}
             >
               {isExpired && (
                 <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] z-50 flex items-center justify-center">
@@ -143,7 +148,7 @@ export default function GuestTicketPage() {
                 </div>
               )}
 
-              <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none overflow-hidden flex flex-wrap gap-4 p-4">
+              <div className="absolute inset-0 opacity-[0.03] pointer-events-none select-none overflow-hidden flex flex-wrap gap-4 p-4" aria-hidden="true">
                 {Array.from({ length: 30 }).map((_, i) => (
                   <div key={i} className="text-[10px] font-mono -rotate-45 text-black">SENTINEL-SECURE-ID</div>
                 ))}
@@ -152,14 +157,14 @@ export default function GuestTicketPage() {
               <div className="w-full flex justify-between items-start mb-8 z-10">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${isActiveContext ? 'bg-primary' : 'bg-black/20'}`} />
+                    <div className={`w-2.5 h-2.5 rounded-full ${isActiveContext ? 'bg-primary' : 'bg-black/20'}`} aria-hidden="true" />
                     <p className="text-black text-[10px] font-black uppercase tracking-[0.4em]">OPERATIONAL PASS</p>
                   </div>
                   <h4 className="text-black font-black text-3xl leading-[0.85] tracking-tighter uppercase">{currentTicket.event?.title || 'Unknown Event'}</h4>
                 </div>
                 <div className="flex flex-col items-end">
                   <div className={`w-12 h-12 border-2 rounded-2xl flex items-center justify-center bg-white shadow-sm ${isActiveContext ? 'border-primary/20 bg-primary/5' : 'border-black/10'}`}>
-                    <span className={`material-symbols-outlined text-3xl ${isActiveContext ? 'text-primary' : 'text-black'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                    <span className={`material-symbols-outlined text-3xl ${isActiveContext ? 'text-primary' : 'text-black'}`} style={{ fontVariationSettings: "'FILL' 1" }} aria-hidden="true">
                       {isActiveContext ? 'verified' : 'shield_with_house'}
                     </span>
                   </div>
@@ -167,9 +172,9 @@ export default function GuestTicketPage() {
               </div>
 
               <div className="relative mb-8 z-10">
-                 <div className={`absolute inset-0 blur-3xl rounded-full transition-colors ${isActiveContext ? 'bg-primary/20' : 'bg-black/5'}`} />
+                 <div className={`absolute inset-0 blur-3xl rounded-full transition-colors ${isActiveContext ? 'bg-primary/20' : 'bg-black/5'}`} aria-hidden="true" />
                  <div className={`relative bg-white p-5 border-[3px] rounded-[2rem] shadow-[12px_12px_0px_rgba(0,0,0,0.03)] group transition-all ${isActiveContext ? 'border-primary shadow-[12px_12px_0px_rgba(var(--color-primary-rgb),0.05)]' : 'border-black'}`}>
-                   <QRCodeCanvas value={currentTicket.id} size={180} level="H" fgColor="#000000" bgColor="#ffffff" />
+                   <QRCodeCanvas value={currentTicket.id} size={180} level="H" fgColor="#000000" bgColor="#ffffff" aria-label={`QR Code for ticket ${currentTicket.id}`} />
                  </div>
               </div>
 
@@ -198,15 +203,19 @@ export default function GuestTicketPage() {
 
                 <div className="flex justify-between items-center bg-black/5 p-3 rounded-xl border border-dashed border-black/10">
                   <p className="text-[8px] font-mono text-black/40 font-bold uppercase tracking-wider">Pass UID: {currentTicket.id.slice(0, 16)}</p>
-                  <div className={`w-1.5 h-1.5 rounded-full ${isActiveContext ? 'bg-primary animate-pulse' : 'bg-black/20'}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${isActiveContext ? 'bg-primary animate-pulse' : 'bg-black/20'}`} aria-hidden="true" />
                 </div>
               </div>
             </div>
           </div>
 
           {tickets.length > 1 && (
-             <button onClick={handlePrev} className="hidden md:flex w-12 h-12 items-center justify-center rounded-full bg-surface-container border border-outline-variant/10 hover:bg-primary/20 hover:text-primary transition-all">
-                <span className="material-symbols-outlined">chevron_left</span>
+             <button 
+              onClick={handleNext} 
+              aria-label="Next Ticket"
+              className="hidden md:flex w-12 h-12 items-center justify-center rounded-full bg-surface-container border border-outline-variant/10 hover:bg-primary/20 hover:text-primary transition-all"
+             >
+                <span className="material-symbols-outlined" aria-hidden="true">chevron_right</span>
              </button>
           )}
         </div>
@@ -215,26 +224,28 @@ export default function GuestTicketPage() {
             {isActiveContext ? (
                <button 
                  onClick={handleDeactivate}
+                 aria-label="Deactivate this ticket as the primary context"
                  className="w-full py-4 bg-error/10 text-error border border-error/20 rounded-2xl font-black uppercase tracking-widest text-[11px] hover:bg-error/20 transition-all flex items-center justify-center gap-2"
                >
-                 <span className="material-symbols-outlined text-sm">cancel</span>
+                 <span className="material-symbols-outlined text-sm" aria-hidden="true">cancel</span>
                  Clear Active Context
                </button>
             ) : (
                <button 
                  onClick={handleActivate}
                  disabled={!canActivate}
+                 aria-label={canActivate ? `Activate ${currentTicket.event?.title} for Tactical OS access` : "Ticket cannot be activated at this time"}
                  className={`w-full py-5 rounded-2xl font-black uppercase tracking-widest text-[12px] shadow-2xl transition-all flex items-center justify-center gap-2 
                    ${canActivate 
                      ? 'bg-primary text-on-primary hover:brightness-110 active:scale-95' 
                      : 'bg-surface-container-highest/20 text-on-surface-variant/40 border border-outline-variant/10 opacity-50 cursor-not-allowed'}`}
                >
                  {isExpired ? (
-                   <><span className="material-symbols-outlined text-sm">lock_clock</span>Context Expired</>
+                   <><span className="material-symbols-outlined text-sm" aria-hidden="true">lock_clock</span>Context Expired</>
                  ) : !isEventActiveByAdmin ? (
-                   <><span className="material-symbols-outlined text-sm">alarm</span>Context Offline (Scheduled)</>
+                   <><span className="material-symbols-outlined text-sm" aria-hidden="true">alarm</span>Context Offline (Scheduled)</>
                  ) : (
-                   <><span className="material-symbols-outlined text-sm">verified_user</span>Activate for Tactical OS</>
+                   <><span className="material-symbols-outlined text-sm" aria-hidden="true">verified_user</span>Activate for Tactical OS</>
                  )}
                </button>
             )}
@@ -250,11 +261,11 @@ export default function GuestTicketPage() {
       <div className="w-full max-w-[340px] mt-12 space-y-4">
           {tickets.length > 1 && (
             <div className="flex items-center justify-between gap-4 md:hidden">
-               <button onClick={handlePrev} className="flex-1 py-3 bg-surface-container rounded-xl flex items-center justify-center border border-outline-variant/10">
-                 <span className="material-symbols-outlined">navigate_before</span>
+               <button onClick={handlePrev} aria-label="Previous Ticket" className="flex-1 py-3 bg-surface-container rounded-xl flex items-center justify-center border border-outline-variant/10">
+                 <span className="material-symbols-outlined" aria-hidden="true">navigate_before</span>
                </button>
-               <button onClick={handleNext} className="flex-1 py-3 bg-surface-container rounded-xl flex items-center justify-center border border-outline-variant/10">
-                 <span className="material-symbols-outlined">navigate_next</span>
+               <button onClick={handleNext} aria-label="Next Ticket" className="flex-1 py-3 bg-surface-container rounded-xl flex items-center justify-center border border-outline-variant/10">
+                 <span className="material-symbols-outlined" aria-hidden="true">navigate_next</span>
                </button>
             </div>
           )}
@@ -263,31 +274,34 @@ export default function GuestTicketPage() {
              <button
                onClick={() => setDownloadMenu(o => !o)}
                disabled={downloading}
+               aria-expanded={downloadMenu}
+               aria-haspopup="true"
+               aria-controls="download-menu"
                className="w-full flex items-center justify-center gap-3 bg-surface-container-highest/20 hover:bg-surface-container-highest/40 text-on-surface font-bold text-xs uppercase tracking-widest py-5 rounded-2xl active:scale-[0.98] transition-all disabled:opacity-60 border border-outline-variant/10"
              >
-               {downloading ? <span className="animate-spin material-symbols-outlined text-sm">sync</span> : <span className="material-symbols-outlined text-sm">download</span>}
+               {downloading ? <span className="animate-spin material-symbols-outlined text-sm">sync</span> : <span className="material-symbols-outlined text-sm" aria-hidden="true">download</span>}
                {downloading ? 'Preparing Pass...' : 'Download / Print Pass'}
-               {!downloading && <span className="material-symbols-outlined text-sm opacity-40">expand_more</span>}
+               {!downloading && <span className="material-symbols-outlined text-sm opacity-40" aria-hidden="true">expand_more</span>}
              </button>
 
              {downloadMenu && (
-               <div className="absolute bottom-full mb-3 left-0 right-0 bg-[#171f33] border border-outline-variant/10 rounded-2xl overflow-hidden shadow-2xl z-50 animate-in slide-in-from-bottom-2">
-                 <button onClick={downloadPDF} className="flex items-center gap-4 px-6 py-4 w-full text-left hover:bg-white/5 transition-colors border-b border-outline-variant/5">
-                   <span className="material-symbols-outlined text-error">picture_as_pdf</span>
+               <div id="download-menu" className="absolute bottom-full mb-3 left-0 right-0 bg-[#171f33] border border-outline-variant/10 rounded-2xl overflow-hidden shadow-2xl z-50 animate-in slide-in-from-bottom-2">
+                 <button onClick={downloadPDF} aria-label="Download as PDF Document" className="flex items-center gap-4 px-6 py-4 w-full text-left hover:bg-white/5 transition-colors border-b border-outline-variant/5">
+                   <span className="material-symbols-outlined text-error" aria-hidden="true">picture_as_pdf</span>
                    <div>
                      <p className="text-sm font-bold text-on-surface">PDF Document</p>
                      <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider">Tactical High-Res Print</p>
                    </div>
                  </button>
-                 <button onClick={downloadPNG} className="flex items-center gap-4 px-6 py-4 w-full text-left hover:bg-white/5 transition-colors border-b border-outline-variant/5">
-                   <span className="material-symbols-outlined text-primary">image</span>
+                 <button onClick={downloadPNG} aria-label="Download as PNG Image" className="flex items-center gap-4 px-6 py-4 w-full text-left hover:bg-white/5 transition-colors border-b border-outline-variant/5">
+                   <span className="material-symbols-outlined text-primary" aria-hidden="true">image</span>
                    <div>
                      <p className="text-sm font-bold text-on-surface">PNG Image</p>
                      <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider">Save to Secure Storage</p>
                    </div>
                  </button>
-                 <button onClick={handlePrint} className="flex items-center gap-4 px-6 py-4 w-full text-left hover:bg-white/5 transition-colors">
-                   <span className="material-symbols-outlined text-secondary">print</span>
+                 <button onClick={handlePrint} aria-label="Print Direct" className="flex items-center gap-4 px-6 py-4 w-full text-left hover:bg-white/5 transition-colors">
+                   <span className="material-symbols-outlined text-secondary" aria-hidden="true">print</span>
                    <div>
                      <p className="text-sm font-bold text-on-surface">Direct Print</p>
                      <p className="text-[10px] text-on-surface-variant font-medium uppercase tracking-wider">Hardcopy Deployment</p>
@@ -296,6 +310,10 @@ export default function GuestTicketPage() {
                </div>
              )}
           </div>
+       </div>
+
+       <div aria-live="polite" className="sr-only">
+          {downloading ? "Preparing your tactical pass for download..." : ""}
        </div>
     </main>
   );
