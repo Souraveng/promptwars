@@ -32,7 +32,7 @@ mutation CreateEvent(
   $startTime: Timestamp = null,
   $expiryDate: Timestamp = null,
   $bannerUrl: String = null
-) @auth(level: PUBLIC) {
+) @auth(level: ADMIN) {
   event_insert(data: {
     title: $title,
     venueName: $venueName,
@@ -62,7 +62,7 @@ mutation IssueTicket(
   $guestMobile: String!,
   $guestEmail: String!,
   $userId: String = null
-) @auth(level: PUBLIC) {
+) @auth(level: ADMIN) {
   ticket_insert(data: {
     eventId: $eventId,
     gate: $gate,
@@ -82,7 +82,7 @@ mutation IssueTicket(
 }
 
 # Venue Layout CRUD
-mutation CreateVenueLayout($name: String!, $elements: String!) @auth(level: PUBLIC) {
+mutation CreateVenueLayout($name: String!, $elements: String!) @auth(level: ADMIN) {
   venueLayout_insert(data: {
     name: $name,
     elements: $elements
@@ -91,7 +91,7 @@ mutation CreateVenueLayout($name: String!, $elements: String!) @auth(level: PUBL
   }
 }
 
-mutation UpdateVenueLayout($id: UUID!, $name: String, $elements: String) @auth(level: PUBLIC) {
+mutation UpdateVenueLayout($id: UUID!, $name: String, $elements: String) @auth(level: ADMIN) {
   venueLayout_update(id: $id, data: {
     name: $name,
     elements: $elements
@@ -100,24 +100,24 @@ mutation UpdateVenueLayout($id: UUID!, $name: String, $elements: String) @auth(l
   }
 }
 
-mutation DeleteVenueLayout($id: UUID!) @auth(level: PUBLIC) {
+mutation DeleteVenueLayout($id: UUID!) @auth(level: ADMIN) {
   venueLayout_delete(id: $id)
 }
 
-mutation DeleteEvent($id: UUID!) @auth(level: PUBLIC) {
+mutation DeleteEvent($id: UUID!) @auth(level: ADMIN) {
   event_delete(id: $id)
 }
 
-mutation DeleteTicketsByEvent($eventId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteTicketsByEvent($eventId: UUID!) @auth(level: ADMIN) {
   ticket_deleteMany(where: { eventId: { eq: $eventId } })
 }
 
-mutation DeleteEmergencyEventsByEvent($eventId: UUID!) @auth(level: PUBLIC) {
+mutation DeleteEmergencyEventsByEvent($eventId: UUID!) @auth(level: ADMIN) {
   emergencyEvent_deleteMany(where: { eventId: { eq: $eventId } })
 }
 
 # Toggle an event as the active one for the tactical dashboard
-mutation SetActiveEvent($id: UUID!, $isActive: Boolean!) @auth(level: PUBLIC) {
+mutation SetActiveEvent($id: UUID!, $isActive: Boolean!) @auth(level: ADMIN) {
   event_update(id: $id, data: {
     isActive: $isActive
   })
@@ -131,7 +131,7 @@ mutation UpsertUserProfile(
   $idCardNumber: String!,
   $phone: String!,
   $email: String!
-) @auth(level: PUBLIC) {
+) @auth(level: USER) {
   userProfile_upsert(data: {
     id: $id,
     name: $name,
@@ -143,7 +143,7 @@ mutation UpsertUserProfile(
 }
 
 # Link a ticket to a user ID
-mutation ClaimTicket($id: UUID!, $userId: String!) @auth(level: PUBLIC) {
+mutation ClaimTicket($id: UUID!, $userId: String!) @auth(level: USER) {
   ticket_update(id: $id, data: {
     userId: $userId
   })

@@ -28,9 +28,9 @@ export const dataconnect = getDataConnect(app, {
 });
 
 // Connect to emulator in development
-const isDev = process.env.NODE_ENV !== 'production';
-if (isDev) {
-  const host = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
+if (process.env.NODE_ENV !== 'production') {
+  // Use explicit IP to avoid 'localhost' resolution inconsistencies
+  const host = '127.0.0.1';
   console.info(`[Firebase] Connecting to Data Connect Emulator at ${host}:9399`);
   connectDataConnectEmulator(dataconnect, host, 9399);
   

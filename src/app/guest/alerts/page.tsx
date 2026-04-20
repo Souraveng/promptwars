@@ -14,8 +14,19 @@ export default function GuestAlertsPage() {
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
+        let eventId = activeTicket?.eventId || null;
+
+        // Fallback: If no ticket is scanned, try to get the active event's alerts
+        if (!eventId) {
+          const eventRef = queryRef<any, {}>(dataconnect, 'GetActiveEvent', {});
+          const eventResult = await executeQuery(eventRef);
+          if (eventResult.data?.events?.[0]) {
+            eventId = eventResult.data.events[0].id;
+          }
+        }
+
         const qRef = queryRef<any, { eventId: string | null }>(dataconnect, 'GetSystemAlerts', { 
-          eventId: activeTicket?.eventId || null 
+          eventId: eventId 
         });
         const result = await executeQuery(qRef);
         

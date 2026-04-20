@@ -124,13 +124,21 @@ export default function QRScannerPage() {
             {!scanning && !initializing && (
               <div className="z-20 text-center px-10">
                  <div className="flex flex-col gap-4">
-                   <button onClick={startScanner} className="group bg-primary text-on-primary px-8 py-5 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_12px_24px_rgba(var(--color-primary-rgb),0.3)]">
-                     <span className="material-symbols-outlined text-base">sensors</span>
+                   <button 
+                     onClick={startScanner} 
+                     aria-label="Initialize camera scanner"
+                     className="group bg-primary text-on-primary px-8 py-5 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_12px_24px_rgba(var(--color-primary-rgb),0.3)]"
+                   >
+                     <span className="material-symbols-outlined text-base" aria-hidden="true">sensors</span>
                      Initialize Scanner
                    </button>
 
-                   <button onClick={() => fileInputRef.current?.click()} className="bg-white/5 text-on-surface px-8 py-5 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-outline-variant/10">
-                     <span className="material-symbols-outlined text-base">cloud_upload</span>
+                   <button 
+                     onClick={() => fileInputRef.current?.click()} 
+                     aria-label="Upload tactical pass from image file"
+                     className="bg-white/5 text-on-surface px-8 py-5 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-outline-variant/10"
+                   >
+                     <span className="material-symbols-outlined text-base" aria-hidden="true">cloud_upload</span>
                      Upload Digital Pass
                    </button>
                  </div>
@@ -153,7 +161,13 @@ export default function QRScannerPage() {
                 <div className="absolute bottom-10 left-10 w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-2xl pointer-events-none z-30 opacity-60"></div>
                 <div className="absolute bottom-10 right-10 w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-2xl pointer-events-none z-30 opacity-60"></div>
                 <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-primary/60 shadow-[0_0_20px_var(--color-primary)] animate-scan z-30"></div>
-                <button onClick={stopScanner} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40 bg-error/10 hover:bg-error/20 text-error-fixed px-6 py-2.5 rounded-full border border-error/20 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl">Abort Operations</button>
+                 <button 
+                   onClick={stopScanner} 
+                   aria-label="Abort scanning operations"
+                   className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40 bg-error/10 hover:bg-error/20 text-error-fixed px-6 py-2.5 rounded-full border border-error/20 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl focus:ring-2 focus:ring-error transition-all"
+                 >
+                   Abort Operations
+                 </button>
               </>
             )}
           </div>
@@ -163,8 +177,15 @@ export default function QRScannerPage() {
             {/* Subtle scanning glow inside box */}
             <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-pulse"></div>
             
-            <div className="flex items-center gap-4 px-5 py-2 rounded-full bg-white/5 border border-white/5 shadow-inner">
-              <div className={`w-2 h-2 rounded-full ${scanning ? 'bg-green-500 animate-pulse' : 'bg-primary/20'}`}></div>
+            <div 
+              className="flex items-center gap-4 px-5 py-2 rounded-full bg-white/5 border border-white/5 shadow-inner"
+              role="status"
+              aria-live="polite"
+            >
+              <div 
+                className={`w-2 h-2 rounded-full ${scanning ? 'bg-green-500 animate-pulse' : 'bg-primary/20'}`}
+                aria-hidden="true"
+              ></div>
               <span className="text-[9px] font-black uppercase tracking-[0.3em] text-on-surface-variant">
                 {scanning ? 'Handshake Active' : 'Waiting for Handshake'}
               </span>
@@ -174,9 +195,10 @@ export default function QRScannerPage() {
               <p className="text-on-surface-variant/40 text-[9px] font-black uppercase tracking-[0.4em] font-mono italic scale-90">No Tactical Pass Found?</p>
               <button 
                 onClick={() => router.push('/guest/login')}
+                aria-label="Sign in to marketplace"
                 className="w-full bg-primary/10 hover:bg-primary/20 text-primary px-8 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-4 border border-primary/20 hover:border-primary/40 active:scale-95 group/btn"
               >
-                <span className="material-symbols-outlined text-sm group-hover/btn:translate-x-0.5 transition-transform">login</span>
+                <span className="material-symbols-outlined text-sm group-hover/btn:translate-x-0.5 transition-transform" aria-hidden="true">login</span>
                 Sign In to Marketplace
               </button>
             </div>

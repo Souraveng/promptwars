@@ -84,7 +84,7 @@ query ListTickets($eventId: UUID) @auth(level: PUBLIC) {
   }
 }
 
-query GetUserProfile($id: String!) @auth(level: PUBLIC) {
+query GetUserProfile($id: String!) @auth(level: USER) {
   userProfile(id: $id) {
     id
     name
@@ -95,7 +95,7 @@ query GetUserProfile($id: String!) @auth(level: PUBLIC) {
   }
 }
 
-query GetGuestTickets($userId: String!) @auth(level: PUBLIC) {
+query GetGuestTickets($userId: String!) @auth(level: USER) {
   tickets(where: { userId: { eq: $userId } }, orderBy: [{ issuedAt: DESC }]) {
     id
     gate
@@ -117,7 +117,7 @@ query GetGuestTickets($userId: String!) @auth(level: PUBLIC) {
   }
 }
 
-query GetTicket($id: UUID!) @auth(level: PUBLIC) {
+query GetTicket($id: UUID!) @auth(level: USER) {
   ticket(id: $id) {
     id
     guestName
