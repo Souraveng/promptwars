@@ -69,7 +69,7 @@ export default function TacticalLayoutRenderer({ elements, highlightSeat, highli
   return (
     <div 
       ref={containerRef}
-      className="relative w-full h-full bg-[#0a0c10] overflow-hidden cursor-crosshair touch-none select-none rounded-3xl border border-white/5 shadow-2xl"
+      className="relative w-full h-full bg-[#0a0c10] overflow-hidden cursor-crosshair touch-none select-none rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 shadow-[inner_0_0_40px_rgba(0,0,0,0.8)]"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -100,14 +100,14 @@ export default function TacticalLayoutRenderer({ elements, highlightSeat, highli
               key={el.id}
               onClick={() => onElementClick?.(el)}
               className={`absolute flex items-center justify-center border transition-all duration-500 rounded-lg pointer-events-auto
-                ${isHighlighted ? 'ring-4 ring-primary shadow-[0_0_30px_rgba(59,130,246,0.8)] z-50' : 'z-10'}`}
+                ${isHighlighted ? 'ring-2 ring-white/50 shadow-[0_0_40px_rgba(59,130,246,1)] z-50 scale-105' : 'z-10'}`}
               style={{
                 left: `${el.x}%`,
                 top: `${el.y}%`,
                 width: `${el.w}%`,
                 height: `${el.h}%`,
-                backgroundColor: isHighlighted ? `${el.color}99` : `${el.color}33`,
-                borderColor: isHighlighted ? '#fff' : `${el.color}66`,
+                backgroundColor: isHighlighted ? `${el.color}CC` : `${el.color}22`,
+                borderColor: isHighlighted ? '#fff' : `${el.color}44`,
                 transform: `rotate(${el.rotation || 0}deg)`,
                 opacity: el.opacity / 100
               }}
@@ -137,11 +137,11 @@ export default function TacticalLayoutRenderer({ elements, highlightSeat, highli
 
       {/* Target Status HUD */}
       {highlightSeat && (
-        <div className="absolute top-4 left-4 z-20 bg-primary/20 backdrop-blur-md px-3 py-2 rounded-xl border border-primary/30 flex items-center gap-3">
-          <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+        <div className="absolute top-4 left-4 z-20 bg-primary/20 backdrop-blur-xl px-4 py-3 rounded-2xl border border-primary/40 flex items-center gap-3 shadow-2xl">
+          <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(59,130,246,1)]"></div>
           <div className="flex flex-col">
-            <span className="text-[8px] font-bold text-primary-fixed uppercase tracking-widest">ASSIGNED_ZONE</span>
-            <span className="text-xs font-bold text-white uppercase tracking-tight">{highlightSeat}</span>
+            <span className="text-[9px] font-black text-primary-fixed uppercase tracking-[0.2em] leading-none mb-1">TARGET_LOCKED // ZONE</span>
+            <span className="text-sm font-black text-white uppercase tracking-tight leading-none">{highlightSeat}</span>
           </div>
         </div>
       )}

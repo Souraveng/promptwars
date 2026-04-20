@@ -61,7 +61,7 @@ export default function GuestMapPage() {
       <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,_rgba(59,130,246,0.05)_0%,_transparent_70%)]"></div>
 
       {/* Main Map Layer */}
-      <div className="absolute inset-0 z-0">
+      <div className={`absolute inset-0 z-0 transition-all duration-700 ${showMiniMap ? 'scale-110 blur-sm brightness-50' : 'scale-100'}`}>
         {isLoaded && activeTicket ? (
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}
@@ -106,25 +106,33 @@ export default function GuestMapPage() {
         )}
       </div>
 
-      {/* Mini Layout Overlay (Phone View Customization) */}
-      <div className={`absolute top-24 left-6 right-6 bottom-40 z-30 transition-all duration-700 transform ${showMiniMap ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-95 pointer-events-none'}`}>
-        <div className="w-full h-full bg-[#0A0C10]/95 backdrop-blur-2xl rounded-[2.5rem] border border-primary/20 shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
-          <div className="p-6 border-b border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="material-symbols-outlined text-primary">view_quilt</span>
+      {/* Backdrop for Focus Mode */}
+      <div 
+        className={`absolute inset-0 bg-[#0A0C10]/60 backdrop-blur-md z-40 transition-opacity duration-500 ${showMiniMap ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setShowMiniMap(false)}
+      ></div>
+
+      {/* Mini Layout Overlay (Premium Modal) */}
+      <div className={`absolute inset-0 z-50 flex items-center justify-center p-4 md:p-8 transition-all duration-500 transform ${showMiniMap ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-10 opacity-0 scale-95 pointer-events-none'}`}>
+        <div className="w-full max-w-5xl aspect-video md:aspect-[21/9] bg-[#0A0C10]/95 backdrop-blur-2xl rounded-[1.5rem] md:rounded-[3rem] border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.9)] overflow-hidden flex flex-col">
+          <div className="p-4 md:p-8 border-b border-white/5 flex items-center justify-between bg-gradient-to-r from-white/5 to-transparent">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 md:w-14 md:h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                <span className="material-symbols-outlined text-primary text-xl md:text-2xl">view_quilt</span>
+              </div>
               <div>
-                <h3 className="text-sm font-bold text-on-surface uppercase tracking-widest">Tactical Layout</h3>
-                <p className="text-[10px] text-on-surface-variant font-mono uppercase">Indoor Orientation Array</p>
+                <h3 className="text-base md:text-xl font-bold text-on-surface uppercase tracking-[0.2em]">Tactical Layout</h3>
+                <p className="text-[9px] md:text-[11px] text-primary/60 font-mono uppercase tracking-widest font-bold">Indoor Orientation Array // Sector Alpha</p>
               </div>
             </div>
             <button 
               onClick={() => setShowMiniMap(false)}
-              className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-on-surface-variant hover:text-primary transition-colors"
+              className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/5 flex items-center justify-center text-on-surface-variant hover:bg-error/10 hover:text-error transition-all active:scale-95"
             >
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-2 md:p-6 bg-black/20">
              <TacticalLayoutRenderer 
                elements={layoutElements}
                highlightSeat={activeTicket?.seat}
@@ -135,7 +143,7 @@ export default function GuestMapPage() {
       </div>
 
       {/* Floating UI: Search Bar */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-md z-10">
+      <div className={`absolute top-6 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-md z-10 transition-all duration-500 ${showMiniMap ? 'opacity-0 -translate-y-10 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
         <div className="bg-[#222a3e]/60 backdrop-blur-xl rounded-xl flex items-center px-4 py-3 shadow-[0_0_20px_rgba(0,0,0,0.4)] border-l border-primary/20">
           <span className="material-symbols-outlined text-surface-tint mr-3" data-icon="search">search</span>
           <input className="bg-transparent border-none focus:ring-0 text-sm font-label uppercase tracking-widest text-on-surface placeholder-on-surface-variant/40 w-full" placeholder="LOCATE SECTION, SEAT, OR AMENITY" type="text"/>
@@ -144,7 +152,7 @@ export default function GuestMapPage() {
       </div>
 
       {/* Floating UI: Tactical Controls */}
-      <div className="absolute top-24 left-6 flex flex-col gap-4 z-10">
+      <div className={`absolute top-24 left-6 flex flex-col gap-4 z-10 transition-all duration-500 ${showMiniMap ? 'opacity-0 -translate-x-10 pointer-events-none' : 'opacity-100 translate-x-0'}`}>
         <button 
           onClick={() => setShowMiniMap(!showMiniMap)}
           className={`w-14 h-14 rounded-2xl flex flex-col items-center justify-center transition-all ${showMiniMap ? 'bg-primary text-on-primary shadow-[0_0_20px_rgba(59,130,246,0.5)]' : 'bg-[#222a3e]/60 backdrop-blur-xl text-on-surface-variant border border-white/5'}`} 
@@ -159,8 +167,8 @@ export default function GuestMapPage() {
         </button>
       </div>
 
-      {/* Floating UI: Floor Selection (Simplified) */}
-      <div className="absolute top-24 right-6 flex flex-col gap-2 z-10">
+      {/* Floating UI: Floor Selection */}
+      <div className={`absolute top-24 right-6 flex flex-col gap-2 z-10 transition-all duration-500 ${showMiniMap ? 'opacity-0 translate-x-10 pointer-events-none' : 'opacity-100 translate-x-0'}`}>
         {['L3', 'L2', 'L1'].map(floor => (
           <button key={floor} className={`w-12 h-12 rounded-xl flex items-center justify-center font-headline text-xs font-bold transition-all ${floor === 'L1' ? 'bg-primary text-on-primary shadow-lg border border-primary/20' : 'bg-[#222a3e]/40 backdrop-blur-md text-on-surface-variant/40 border border-white/5'}`}>
             {floor}
@@ -169,58 +177,66 @@ export default function GuestMapPage() {
       </div>
 
       {/* Info Overlay: Route Card */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-lg z-20">
-        <div className="bg-[#222a3e]/60 backdrop-blur-xl rounded-xl overflow-hidden relative border-t border-primary/10 shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
+      <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-lg z-20 transition-all duration-500 ${showMiniMap ? 'opacity-0 translate-y-10 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
+        <div className="bg-[#1A1C24]/80 backdrop-blur-2xl rounded-3xl overflow-hidden relative border-t border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] px-1 pt-1">
           {/* Scanning line effect */}
-          <div className="absolute left-0 -top-[100px] w-full h-[100px] bg-gradient-to-b from-transparent via-[rgba(194,198,214,0.05)] to-transparent pointer-events-none animate-[scan_3s_linear_infinite]"></div>
+          <div className="absolute left-0 -top-[100px] w-full h-[100px] bg-gradient-to-b from-transparent via-[rgba(59,130,246,0.1)] to-transparent pointer-events-none animate-[scan_4s_linear_infinite]"></div>
           
-          <div className="p-5 flex flex-col gap-4">
-            <div className="flex justify-between items-start">
-              <div>
-                <div className="text-[10px] font-label font-bold text-secondary uppercase tracking-[0.2em] mb-1 flex items-center gap-1">
-                  <span className="material-symbols-outlined text-[12px]" data-icon="verified" data-weight="fill" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
-                  AUTHENTICATED ACCESS
-                </div>
-                <h2 className="font-headline text-xl font-bold text-on-surface tracking-tight">Active Zone: {activeTicket?.section}-{activeTicket?.seat}</h2>
-                <p className="text-xs text-on-surface-variant/70 font-label flex items-center gap-2 mt-1">
-                  <span className="material-symbols-outlined text-[14px]">stadium</span>
-                  {activeTicket?.event?.venueName} • Level 1
-                </p>
+          <div className="p-6 flex flex-col gap-6 relative z-10">
+            <div className="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
+              <div className="flex items-center gap-4">
+                 <div className="w-12 h-12 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary border border-secondary/20">
+                    <span className="material-symbols-outlined" data-icon="qr_code_2">qr_code_2</span>
+                 </div>
+                 <div>
+                    <div className="text-[10px] font-bold text-secondary uppercase tracking-[0.2em] mb-0.5">AUTHENTICATED ACCESS</div>
+                    <div className="text-[9px] text-on-surface-variant font-mono flex items-center gap-2">
+                       <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+                       DEVICE_LINKED // ENCRYPTED
+                    </div>
+                 </div>
               </div>
-              <div className="bg-primary/20 px-3 py-1 rounded text-primary font-headline text-[10px] font-bold border border-primary/20 uppercase tracking-widest">
-                GATE {activeTicket?.gate}
+              <div className="text-right">
+                 <div className="text-[10px] text-on-surface-variant uppercase tracking-widest font-bold">ACCESS_GATE</div>
+                 <div className="text-white font-headline font-black text-xl">{activeTicket?.gate}</div>
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-3">
-              <div className="bg-surface-container-lowest p-3 rounded-2xl border border-white/5">
-                <div className="text-[9px] text-on-surface-variant/50 font-label uppercase mb-1">Section</div>
-                <div className="text-sm font-headline font-bold text-secondary">{activeTicket?.section}</div>
-              </div>
-              <div className="bg-surface-container-lowest p-3 rounded-2xl border border-white/5">
-                <div className="text-[9px] text-on-surface-variant/50 font-label uppercase mb-1">Row</div>
-                <div className="text-sm font-headline font-bold text-on-surface">{activeTicket?.row}</div>
-              </div>
-              <div className="bg-surface-container-lowest p-3 rounded-2xl border border-white/5">
-                <div className="text-[9px] text-on-surface-variant/50 font-label uppercase mb-1">Seat</div>
-                <div className="text-sm font-headline font-bold text-primary">{activeTicket?.seat}</div>
-              </div>
+            <div>
+              <h2 className="font-headline text-2xl font-bold text-on-surface tracking-tight mb-1 italic">Active Zone: {activeTicket?.section}-{activeTicket?.seat}</h2>
+              <p className="text-[10px] text-primary/60 font-bold uppercase tracking-[0.2em] flex items-center gap-2 translate-x-1">
+                <span className="material-symbols-outlined text-[14px]">location_on</span>
+                {activeTicket?.event?.venueName} • Sector Alpha 
+              </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'SECTION', value: activeTicket?.section, color: 'text-secondary' },
+                { label: 'ROW', value: activeTicket?.row, color: 'text-on-surface' },
+                { label: 'SEAT', value: activeTicket?.seat, color: 'text-primary' }
+              ].map(stat => (
+                <div key={stat.label} className="bg-white/5 p-3 rounded-2xl border border-white/5 flex flex-col items-center justify-center">
+                  <div className="text-[8px] text-on-surface-variant/40 font-bold uppercase tracking-widest mb-1">{stat.label}</div>
+                  <div className={`text-lg font-headline font-black ${stat.color}`}>{stat.value}</div>
+                </div>
+              ))}
             </div>
 
             <button 
               onClick={() => setShowMiniMap(true)}
-              className="w-full bg-gradient-to-r from-primary to-primary-container py-4 rounded-2xl font-headline font-bold text-on-primary-container uppercase tracking-widest text-sm flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(59,130,246,0.3)] active:scale-95 transition-all"
+              className="w-full bg-gradient-to-r from-primary to-blue-600 p-5 rounded-2xl font-headline font-black text-on-primary uppercase tracking-[0.3em] text-xs flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(59,130,246,0.4)] active:scale-[0.98] transition-all hover:brightness-110 group"
             >
-              <span className="material-symbols-outlined" data-icon="explore">explore</span>
+              <span className="material-symbols-outlined group-hover:rotate-12 transition-transform" data-icon="center_focus_strong">center_focus_strong</span>
               Open Tactical Layout
             </button>
           </div>
         </div>
       </div>
       
-      {/* Contextual Telemetry (Decorative Side Elements) */}
-      <div className="hidden md:flex fixed right-6 top-64 flex-col gap-6 w-48 z-40">
-        <div className="bg-surface-container-high/40 backdrop-blur-md p-3 rounded-lg border-l border-primary/20">
+      {/* Contextual Telemetry */}
+      <div className={`hidden md:flex fixed right-6 top-64 flex-col gap-6 w-48 z-40 transition-all duration-500 ${showMiniMap ? 'opacity-0 translate-x-10 pointer-events-none' : 'opacity-100 translate-x-0'}`}>
+        <div className="bg-surface-container-high/40 backdrop-blur-md p-3 rounded-lg border-l border-primary/20 shadow-xl">
           <div className="text-[10px] text-primary font-headline font-bold uppercase tracking-widest mb-2 flex items-center gap-2">
             <span className="w-1.5 h-1.5 bg-secondary rounded-full animate-pulse"></span>
             System Live
@@ -231,14 +247,14 @@ export default function GuestMapPage() {
               <span className="text-on-surface font-mono">14ms</span>
             </div>
             <div className="w-full bg-surface-container-lowest h-1 rounded-full overflow-hidden">
-              <div className="bg-secondary h-full w-2/3"></div>
+              <div className="bg-secondary h-full w-2/3 shadow-[0_0_8px_#4edea3]"></div>
             </div>
           </div>
         </div>
-        <div className="bg-surface-container-high/40 backdrop-blur-md p-3 rounded-lg border-l border-primary/20">
+        <div className="bg-surface-container-high/40 backdrop-blur-md p-3 rounded-lg border-l border-secondary/20 shadow-xl">
           <div className="text-[10px] text-on-surface-variant/60 font-headline font-bold uppercase tracking-widest mb-1">ENV_DATA</div>
-          <div className="text-xl font-headline font-bold text-on-surface">24°C / 42%</div>
-          <div className="text-[9px] text-on-surface-variant/40 mt-1">OPTIMIZED HVAC ACTVE</div>
+          <div className="text-xl font-headline font-black text-on-surface">24°C / 42%</div>
+          <div className="text-[9px] text-on-surface-variant/40 mt-1 uppercase leading-none tracking-tighter">OPTIMIZED HVAC ACTVE // SECTOR_G</div>
         </div>
       </div>
     </main>
