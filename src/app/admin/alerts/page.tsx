@@ -17,6 +17,7 @@ export default function AlertsPage() {
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
+    if (!dataconnect) return;
     const fetchEvents = async () => {
       try {
         const qRef = queryRef<ListEventsData, {}>(dataconnect, 'ListEvents', {});

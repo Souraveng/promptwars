@@ -35,7 +35,11 @@ try {
   // Silent during build-time evaluation if config is missing
 }
 
-export { auth, storage, dataconnect };
+const _auth = auth as Auth;
+const _storage = storage as FirebaseStorage;
+const _dataconnect = dataconnect as DataConnect;
+
+export { _auth as auth, _storage as storage, _dataconnect as dataconnect };
 
 // Connect to emulator in development
 if (process.env.NODE_ENV !== 'production') {

@@ -40,7 +40,7 @@ export default function GuestCrowdPage() {
 
   // Polling for Crowd Indicators
   useEffect(() => {
-    if (!activeTicket?.eventId) return;
+    if (!dataconnect || !activeTicket?.eventId) return;
 
     const fetchCrowdData = async () => {
       try {

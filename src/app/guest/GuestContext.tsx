@@ -32,6 +32,7 @@ export function GuestProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchProfileAndTickets = useCallback(async (uid: string) => {
+    if (!dataconnect) return;
     setLoading(true);
     try {
       // Parallel Execution for Efficiency
