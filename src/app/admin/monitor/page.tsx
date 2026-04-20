@@ -290,12 +290,34 @@ export default function AdminMonitorPage() {
         </header>
 
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 scrollbar-hide">
-          {error && (
-            <div className="p-3 bg-error/10 border border-error/20 rounded-xl text-error text-xs font-mono">
-              {error}
+          {emergencyEvents.length === 0 ? (
+            <div className="text-center py-20 opacity-30 select-none">
+              <span className="material-symbols-outlined text-4xl mb-2">signal_cellular_nfc</span>
+              <p className="text-sm font-medium">Scanning for signals...</p>
             </div>
-          )}
-          
+          ) : (
+            emergencyEvents.map((event) => (
+              <div 
+                key={event.id}
+                className="bg-surface-container-highest p-4 rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all cursor-pointer group relative"
+                onClick={() => event.lat && setSelectedMarker(event)}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className={`p-2 rounded-lg ${event.priority === 'HIGH' ? 'bg-error/10 text-error' : 'bg-secondary/10 text-secondary'}`}>
+                    <EmergencyIcon type={event.type} />
+                  </div>
+                  <span className="text-[9px] font-mono text-on-surface-variant">{new Date(event.timestamp).toLocaleTimeString()}</span>
+                </div>
+                <h4 className="text-sm font-bold text-on-surface uppercase tracking-tight">{event.type}</h4>
+                <p className="text-xs text-on-surface-variant mt-1 line-clamp-2">{event.details}</p>
+                <div className="mt-3 pt-3 border-t border-outline-variant/5 flex justify-between items-center">
+                  <div className="flex items-center gap-1 text-[9px] text-primary-fixed-dim font-bold">
+                    <span className="material-symbols-outlined text-[10px]">location_on</span>
+                    {event.lat && event.lng ? `${event.lat.toFixed(4)}, ${event.lng.toFixed(4)}` : 'NO_LOCATION'}
+                  </div>
+                  <button className="text-[10px] font-bold text-secondary hover:text-white transition-colors bg-secondary/5 px-2 py-0.5 rounded border border-secondary/10">ACKNOWLEDGE</button>
+                </div>
+              </div>
             ))
           )}
         </div>
