@@ -15,7 +15,7 @@ export default function BottomNavBar() {
     { href: '/guest/map',       icon: 'map',                 label: 'Map',      guarded: true },
     { href: '/guest/crowd',     icon: 'groups',              label: 'Crowd',    guarded: true },
     { href: '/guest/sos',       icon: 'emergency',           label: 'SOS',      guarded: true },
-    { href: '/guest/medical',   icon: 'medical_services',    label: 'Medical',  guarded: true },
+    { href: '/guest/alerts',    icon: 'notifications',       label: 'Alerts',   guarded: true },
   ];
 
   return (

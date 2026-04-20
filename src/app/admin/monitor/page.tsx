@@ -125,26 +125,25 @@ export default function AdminMonitorPage() {
   }, [selectedEventId]);
 
   return (
-    <div className="grid grid-cols-12 gap-6 p-6 h-[calc(100vh-100px)] overflow-hidden">
-      <section className="col-span-12 xl:col-span-8 relative rounded-3xl overflow-hidden bg-surface-container border border-outline-variant/10 shadow-2xl flex flex-col">
-        <div className="absolute top-4 left-4 right-4 z-10 flex justify-between items-start pointer-events-none">
-          <div className="flex gap-3 pointer-events-none">
-            <div className="bg-surface-container-high/90 backdrop-blur-md p-4 rounded-2xl border border-outline-variant/20 shadow-xl pointer-events-auto">
-              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Live Occupancy</p>
-              <p className="text-2xl font-headline font-bold text-on-surface">14,208</p>
+    <div className="flex flex-col xl:grid xl:grid-cols-12 gap-4 p-4 md:p-6 min-h-0 overflow-auto">
+      <section className="xl:col-span-8 relative rounded-2xl overflow-hidden bg-surface-container border border-outline-variant/10 shadow-2xl flex flex-col" style={{ minHeight: '300px', height: 'clamp(300px, 50vw, 500px)' }}>
+        <div className="absolute top-3 left-3 right-3 z-10 flex flex-wrap justify-between items-start gap-2 pointer-events-none">
+          <div className="flex gap-2 pointer-events-none flex-wrap">
+            <div className="bg-surface-container-high/90 backdrop-blur-md px-3 py-2 rounded-xl border border-outline-variant/20 shadow-xl pointer-events-auto">
+              <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Live Occupancy</p>
+              <p className="text-lg font-headline font-bold text-on-surface">14,208</p>
             </div>
-            <div className="bg-surface-container-high/90 backdrop-blur-md p-4 rounded-2xl border border-outline-variant/20 shadow-xl pointer-events-auto">
-              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest mb-1">Capacity</p>
-              <p className="text-2xl font-headline font-bold text-on-surface">71%</p>
+            <div className="bg-surface-container-high/90 backdrop-blur-md px-3 py-2 rounded-xl border border-outline-variant/20 shadow-xl pointer-events-auto">
+              <p className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">Capacity</p>
+              <p className="text-lg font-headline font-bold text-on-surface">71%</p>
             </div>
           </div>
-
-          <div className="bg-surface-container-high/90 backdrop-blur-md p-2 rounded-xl border border-outline-variant/20 shadow-xl pointer-events-auto flex items-center gap-3">
-            <label className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant pl-2">Context:</label>
+          <div className="bg-surface-container-high/90 backdrop-blur-md p-2 rounded-xl border border-outline-variant/20 shadow-xl pointer-events-auto flex items-center gap-2">
+            <label className="text-[9px] uppercase font-bold tracking-widest text-on-surface-variant pl-1 hidden sm:block">Context:</label>
             <select 
               value={selectedEventId}
               onChange={(e) => setSelectedEventId(e.target.value)}
-              className="bg-surface-container-highest border border-outline-variant/30 rounded-lg px-4 py-2 text-sm text-on-surface font-semibold focus:outline-none focus:border-primary/50 transition-all cursor-pointer"
+              className="bg-surface-container-highest border border-outline-variant/30 rounded-lg px-2 py-1.5 text-xs text-on-surface font-semibold focus:outline-none max-w-[140px] sm:max-w-none"
             >
               <option value="">Select Event...</option>
               {events.map(e => (
@@ -230,7 +229,7 @@ export default function AdminMonitorPage() {
         </div>
       </section>
 
-      <section className="col-span-12 xl:col-span-4 bg-surface-container-low rounded-3xl border border-outline-variant/10 shadow-xl flex flex-col min-h-0">
+      <section className="xl:col-span-4 bg-surface-container-low rounded-2xl border border-outline-variant/10 shadow-xl flex flex-col" style={{ minHeight: '300px' }}>
         <header className="p-5 border-b border-outline-variant/10 flex justify-between items-center bg-surface-container-lowest/50 rounded-t-3xl">
           <div>
             <h2 className="text-lg font-headline font-bold text-on-surface">Emergency Stream</h2>
@@ -253,8 +252,10 @@ export default function AdminMonitorPage() {
           )}
           
           {emergencyEvents.length === 0 ? (
-            <div className="text-center py-20 opacity-30 select-none">
-              <span className="material-symbols-outlined text-4xl mb-2">signal_cellular_nfc</span>
+            <div className="text-center py-16 opacity-30 select-none flex flex-col items-center gap-2">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-on-surface-variant">
+                <path d="M1 6l5 5 4-4 4 4 5-5M1 12l5 5 4-4 4 4 5-5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               <p className="text-sm font-medium">Scanning for signals...</p>
             </div>
           ) : (
