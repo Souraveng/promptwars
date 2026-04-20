@@ -16,28 +16,16 @@ export const GOOGLE_MAPS_API_KEY = (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY 
 export const MAP_LIBRARIES: ("places" | "marker" | "visualization")[] = ["places", "marker", "visualization"];
 export const DEFAULT_MAP_ID = '8e0a97af9386f9';
 
-// Build-safe initialization: Only initialize if apiKey is present to avoid crashing during prerendering
-const isBrowser = typeof window !== 'undefined';
-const hasConfig = !!firebaseConfig.apiKey;
+// Initialize Firebase securely (prevent overlapping multiple instances in Next.js Dev Mode)
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-// We use a getter-like approach or a soft-fail to allow the module to be imported during build
-let app: FirebaseApp | undefined;
-
-if (hasConfig || isBrowser) {
-  try {
-    app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  } catch (e) {
-    if (isBrowser) console.error("Firebase init failed:", e);
-  }
-}
-
-export const auth = app ? getAuth(app) : ({} as Auth);
-export const storage = app ? getStorage(app) : ({} as FirebaseStorage);
-export const dataconnect = app ? getDataConnect(app, {
+export const auth = getAuth(app);
+export const storage = getStorage(app);
+export const dataconnect = getDataConnect(app, {
   service: "promptwar",
   location: "us-central1",
   connector: "example"
-}) : ({} as DataConnect);
+});
 
 // Connect to emulator in development
 if (process.env.NODE_ENV !== 'production') {
