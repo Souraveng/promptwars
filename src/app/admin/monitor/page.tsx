@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { dataconnect, GOOGLE_MAPS_API_KEY, MAP_LIBRARIES, DEFAULT_MAP_ID } from '@/lib/firebase-client';
-import { executeQuery, queryRef } from 'firebase/data-connect';
-import { ListEventsData, GetEmergencyEventsData, Event, EmergencyEvent } from '@/types/dataconnect';
+import { executeMutation, executeQuery, mutationRef, queryRef } from 'firebase/data-connect';
+import { ListEventsData, GetEmergencyEventsData, Event, EmergencyEvent, LogEmergencyEventVariables } from '@/types/dataconnect';
 import { GoogleMap, useJsApiLoader, InfoWindow, HeatmapLayer } from '@react-google-maps/api';
+import { enhanceBroadcastText } from '@/app/actions/ai';
 
 const MAP_ID = DEFAULT_MAP_ID;
 
@@ -68,6 +69,13 @@ export default function AdminMonitorPage() {
   const [selectedMarker, setSelectedMarker] = useState<any>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
 
+  // Broadcast Hub State
+  const [broadcastText, setBroadcastText] = useState('');
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [broadcastTarget, setBroadcastTarget] = useState<'EVENT' | 'GLOBAL'>('EVENT');
+  const [broadcastType, setBroadcastType] = useState<'tactical' | 'promotional'>('tactical');
+
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -123,6 +131,42 @@ export default function AdminMonitorPage() {
     const timer = setInterval(poll, 3000);
     return () => clearInterval(timer);
   }, [selectedEventId]);
+
+  const handleAIByGemini = async () => {
+    if (!broadcastText) return;
+    setIsEnhancing(true);
+    try {
+      const enhanced = await enhanceBroadcastText(broadcastText, broadcastType);
+      setBroadcastText(enhanced);
+    } catch (err) {
+      console.error('AI Enhancement failed:', err);
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
+
+  const handleSendBroadcast = async () => {
+    if (!broadcastText) return;
+    setIsBroadcasting(true);
+    try {
+      const ref = mutationRef<any, LogEmergencyEventVariables>(dataconnect, 'LogEmergencyEvent', {
+        type: broadcastTarget === 'GLOBAL' ? 'COMMUNITY_BROADCAST' : 'EVENT_BROADCAST',
+        priority: broadcastType === 'tactical' ? 'HIGH' : 'LOW',
+        details: broadcastText,
+        lat: null,
+        lng: null,
+        eventId: broadcastTarget === 'GLOBAL' ? null : selectedEventId
+      });
+      await executeMutation(ref);
+      setBroadcastText('');
+      alert('Broadcast sent successfully!');
+    } catch (err: any) {
+      console.error('Broadcast failed:', err);
+      alert('Failed to send broadcast: ' + err.message);
+    } finally {
+      setIsBroadcasting(false);
+    }
+  };
 
   return (
     <div className="grid grid-cols-12 gap-6 p-6 h-[calc(100vh-100px)] overflow-hidden">
@@ -252,37 +296,87 @@ export default function AdminMonitorPage() {
             </div>
           )}
           
-          {emergencyEvents.length === 0 ? (
-            <div className="text-center py-20 opacity-30 select-none">
-              <span className="material-symbols-outlined text-4xl mb-2">signal_cellular_nfc</span>
-              <p className="text-sm font-medium">Scanning for signals...</p>
-            </div>
-          ) : (
-            emergencyEvents.map((event) => (
-              <div 
-                key={event.id}
-                className="bg-surface-container-highest p-4 rounded-xl border border-outline-variant/10 hover:border-primary/30 transition-all cursor-pointer group relative"
-                onClick={() => event.lat && setSelectedMarker(event)}
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <div className={`p-2 rounded-lg ${event.priority === 'HIGH' ? 'bg-error/10 text-error' : 'bg-secondary/10 text-secondary'}`}>
-                    <EmergencyIcon type={event.type} />
-                  </div>
-                  <span className="text-[9px] font-mono text-on-surface-variant">{new Date(event.timestamp).toLocaleTimeString()}</span>
-                </div>
-                <h4 className="text-sm font-bold text-on-surface uppercase tracking-tight">{event.type}</h4>
-                <p className="text-xs text-on-surface-variant mt-1 line-clamp-2">{event.details}</p>
-                <div className="mt-3 pt-3 border-t border-outline-variant/5 flex justify-between items-center">
-                  <div className="flex items-center gap-1 text-[9px] text-primary-fixed-dim font-bold">
-                    <span className="material-symbols-outlined text-[10px]">location_on</span>
-                    {event.lat && event.lng ? `${event.lat.toFixed(4)}, ${event.lng.toFixed(4)}` : 'NO_LOCATION'}
-                  </div>
-                  <button className="text-[10px] font-bold text-secondary hover:text-white transition-colors bg-secondary/5 px-2 py-0.5 rounded border border-secondary/10">ACKNOWLEDGE</button>
-                </div>
-              </div>
             ))
           )}
         </div>
+
+        {/* AI Broadcast Hub */}
+        <section className="p-5 border-t border-outline-variant/10 bg-surface-container-highest/20">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-on-surface flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary text-lg">campaign</span>
+              Broadcast Hub
+            </h3>
+            <div className="flex bg-surface-container-low rounded-lg p-1 border border-outline-variant/10">
+              <button 
+                onClick={() => setBroadcastTarget('EVENT')}
+                className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-md transition-all ${broadcastTarget === 'EVENT' ? 'bg-primary text-on-primary' : 'text-on-surface-variant'}`}
+              >
+                Event
+              </button>
+              <button 
+                onClick={() => setBroadcastTarget('GLOBAL')}
+                className={`px-3 py-1 text-[9px] font-bold uppercase tracking-widest rounded-md transition-all ${broadcastTarget === 'GLOBAL' ? 'bg-secondary text-white' : 'text-on-surface-variant'}`}
+              >
+                Global
+              </button>
+            </div>
+          </div>
+
+          <div className="relative group">
+            <textarea 
+              value={broadcastText}
+              onChange={(e) => setBroadcastText(e.target.value)}
+              placeholder="Enter broadcast message or tactical briefing..."
+              className="w-full h-32 bg-surface-container-highest border border-outline-variant/20 rounded-2xl px-4 py-3 text-sm text-on-surface placeholder-on-surface-variant/40 focus:outline-none focus:border-primary/50 transition-all resize-none mb-4 scrollbar-hide"
+            />
+            {isEnhancing && (
+              <div className="absolute inset-0 flex items-center justify-center bg-surface-container-highest/60 backdrop-blur-[1px] rounded-2xl">
+                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            )}
+            
+            <button 
+              onClick={handleAIByGemini}
+              disabled={isEnhancing || !broadcastText}
+              className="absolute right-3 bottom-7 p-2 rounded-xl bg-primary/10 text-primary hover:bg-primary hover:text-white transition-all shadow-lg active:scale-90 disabled:opacity-50"
+              title="Enhance with Gemini Flash"
+            >
+              <span className="material-symbols-outlined text-sm">auto_awesome</span>
+            </button>
+          </div>
+
+          <div className="flex gap-3">
+             <div className="flex-1 flex bg-surface-container-low rounded-xl p-1 border border-outline-variant/10">
+                <button 
+                  onClick={() => setBroadcastType('tactical')}
+                  className={`flex-1 py-2 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all ${broadcastType === 'tactical' ? 'bg-primary/20 text-primary' : 'text-on-surface-variant opacity-50'}`}
+                >
+                  Tactical
+                </button>
+                <button 
+                  onClick={() => setBroadcastType('promotional')}
+                  className={`flex-1 py-2 text-[9px] font-bold uppercase tracking-widest rounded-lg transition-all ${broadcastType === 'promotional' ? 'bg-secondary/20 text-secondary' : 'text-on-surface-variant opacity-50'}`}
+                >
+                  Promo
+                </button>
+             </div>
+             <button 
+              onClick={handleSendBroadcast}
+              disabled={isBroadcasting || !broadcastText}
+              className="flex-[1.5] bg-primary text-on-primary rounded-xl font-bold text-xs uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+             >
+                {isBroadcasting ? (
+                  <span className="material-symbols-outlined animate-spin text-sm">sync</span>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm">send</span>
+                    Send
+                  </>
+                )}
+             </button>
+          </div>
+        </section>
       </section>
     </div>
   );

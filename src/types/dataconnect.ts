@@ -131,3 +131,7 @@ export interface GetTicketData {
     event: Event;
   } | null;
 }
+export interface GetSystemAlertsData {
+  eventAlerts: EmergencyEvent[];
+  communityAlerts: EmergencyEvent[];
+}
