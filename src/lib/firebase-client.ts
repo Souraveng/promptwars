@@ -32,7 +32,9 @@ try {
     connector: "example"
   });
 } catch (e) {
-  // Silent during build-time evaluation if config is missing
+  if (typeof window !== 'undefined') {
+    console.error("Critical: Firebase Initialization Failed. This usually happens when 'NEXT_PUBLIC_FIREBASE_API_KEY' is missing or invalid at build-time. Please check your Cloud Build Substitution Variables.", e);
+  }
 }
 
 const _auth = auth as Auth;
