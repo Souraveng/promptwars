@@ -141,3 +141,10 @@ mutation UpsertUserProfile(
     email: $email
   })
 }
+
+# Link a ticket to a user ID
+mutation ClaimTicket($id: UUID!, $userId: String!) @auth(level: PUBLIC) {
+  ticket_update(id: $id, data: {
+    userId: $userId
+  })
+}

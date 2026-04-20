@@ -141,3 +141,31 @@ query GetTicket($id: UUID!) @auth(level: PUBLIC) {
     }
   }
 }
+query GetSystemAlerts($eventId: UUID) @auth(level: PUBLIC) {
+  eventAlerts: emergencyEvents(
+    where: { eventId: { eq: $eventId } },
+    orderBy: [{ timestamp: DESC }],
+    limit: 50
+  ) {
+    id
+    type
+    priority
+    details
+    timestamp
+    status
+    eventId
+  }
+  communityAlerts: emergencyEvents(
+    where: { eventId: { eq: null } },
+    orderBy: [{ timestamp: DESC }],
+    limit: 50
+  ) {
+    id
+    type
+    priority
+    details
+    timestamp
+    status
+    eventId
+  }
+}

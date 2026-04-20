@@ -11,7 +11,7 @@ import {
 } from 'firebase/auth';
 import { auth, dataconnect } from '@/lib/firebase-client';
 import { executeMutation, executeQuery } from 'firebase/data-connect';
-import { GetTicketData, GetTicketVariables } from '@/types/dataconnect';
+import { GetTicketData, GetTicketVariables, ClaimTicketVariables, UpsertUserProfileVariables } from '@/types/dataconnect';
 import { useGuest } from '../GuestContext';
 import { useSearchParams } from 'next/navigation';
 
@@ -39,9 +39,18 @@ export default function GuestLoginPage() {
       const qRef = await import('firebase/data-connect').then(m => m.queryRef<GetTicketData, GetTicketVariables>(dataconnect, 'GetTicket', { id }));
       const result = await executeQuery(qRef);
       const ticket = result.data?.ticket;
+      
       if (ticket) {
         setScannedTicket(ticket);
-        // If ticket found, preset some fields if in signup mode
+        
+        // If already logged in, link and sync profile immediately
+        if (user && !contextLoading) {
+          await linkAndSyncProfile(ticket, user.uid);
+          router.push('/guest/dashboard');
+          return;
+        }
+
+        // Preset form fields for new signups
         setFormData(prev => ({
           ...prev,
           name: ticket.guestName,
@@ -59,6 +68,32 @@ export default function GuestLoginPage() {
       setVerifyingTicket(false);
     }
   };
+
+  const linkAndSyncProfile = async (ticket: any, uid: string) => {
+    try {
+      // 1. Claim the ticket
+      const claimRef = await import('firebase/data-connect').then(m => m.mutationRef<any, ClaimTicketVariables>(dataconnect, 'ClaimTicket', {
+        id: ticket.id,
+        userId: uid
+      }));
+      await executeMutation(claimRef);
+
+      // 2. Sync Profile data from ticket
+      const syncRef = await import('firebase/data-connect').then(m => m.mutationRef<any, UpsertUserProfileVariables>(dataconnect, 'UpsertUserProfile', {
+        id: uid,
+        name: ticket.guestName,
+        age: ticket.guestAge,
+        idCardNumber: ticket.guestIdNumber,
+        phone: ticket.guestMobile,
+        email: ticket.guestEmail
+      }));
+      await executeMutation(syncRef);
+      
+      console.log('Tactical handshake complete: Ticket linked and profile synced.');
+    } catch (err) {
+      console.error('Handshake error:', err);
+    }
+  };
   
   // Registration Form State
   const [formData, setFormData] = useState({
@@ -74,9 +109,18 @@ export default function GuestLoginPage() {
   // Redirect if authenticated
   useEffect(() => {
     if (!contextLoading && user) {
-      router.push('/guest/dashboard');
+      // Check if we have a scanned ticket waiting to be claimed
+      if (scannedTicket) {
+        setVerifyingTicket(true);
+        linkAndSyncProfile(scannedTicket, user.uid).finally(() => {
+          setVerifyingTicket(false);
+          router.push('/guest/dashboard');
+        });
+      } else {
+        router.push('/guest/dashboard');
+      }
     }
-  }, [user, contextLoading, router]);
+  }, [user, contextLoading, router, scannedTicket]);
 
   const handleGoogleAuth = async () => {
     setLoading(true);
