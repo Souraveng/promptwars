@@ -17,15 +17,20 @@ export const MAP_LIBRARIES: ("places" | "marker" | "visualization")[] = ["places
 export const DEFAULT_MAP_ID = '8e0a97af9386f9';
 
 // Initialize Firebase securely (prevent overlapping multiple instances in Next.js Dev Mode)
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+let app;
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+} catch (e) {
+  // Silent during build-time evaluation if config is missing
+}
 
-export const auth = getAuth(app);
-export const storage = getStorage(app);
-export const dataconnect = getDataConnect(app, {
+export const auth = app ? getAuth(app) : undefined as any;
+export const storage = app ? getStorage(app) : undefined as any;
+export const dataconnect = app ? getDataConnect(app, {
   service: "promptwar",
   location: "us-central1",
   connector: "example"
-});
+}) : undefined as any;
 
 // Connect to emulator in development
 if (process.env.NODE_ENV !== 'production') {
