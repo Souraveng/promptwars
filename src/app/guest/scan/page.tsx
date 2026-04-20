@@ -113,76 +113,73 @@ export default function QRScannerPage() {
           <p className="font-body text-[10px] text-primary font-black uppercase tracking-[0.4em] mt-3 opacity-60">Verified Operative Entrance</p>
         </div>
 
-        {/* The Viewport */}
-        <div className="w-full relative rounded-[3rem] overflow-hidden border-2 border-outline-variant/10 shadow-[0_32px_128px_rgba(0,0,0,0.5)] bg-surface-container-low aspect-square flex items-center justify-center">
-          <div id="reader" className="w-full h-full absolute inset-0"></div>
-          <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
-
-          {!scanning && !initializing && (
-            <div className="z-20 text-center px-10">
-               <div className="flex flex-col gap-4">
-                 <button onClick={startScanner} className="group bg-primary text-on-primary px-8 py-5 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_12px_24px_rgba(var(--color-primary-rgb),0.3)]">
-                   <span className="material-symbols-outlined text-base">sensors</span>
-                   Initialize Scanner
-                 </button>
-
-                 <button onClick={() => fileInputRef.current?.click()} className="bg-surface-container-highest/40 text-on-surface px-8 py-5 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-white/5 transition-all flex items-center justify-center gap-3 border border-outline-variant/10">
-                   <span className="material-symbols-outlined text-base">cloud_upload</span>
-                   Upload Digital Pass
-                 </button>
-               </div>
-               
-               <p className="mt-8 text-on-surface-variant/40 text-[10px] font-bold uppercase tracking-widest">End-to-End Encrypted Handshake</p>
-            </div>
-          )}
-
-          {initializing && (
-            <div className="z-20 flex flex-col items-center gap-5">
-               <div className="w-12 h-12 border-[5px] border-primary border-t-transparent rounded-full animate-spin"></div>
-               <span className="text-[10px] uppercase tracking-[0.3em] font-black text-primary animate-pulse">Establishing Uplink...</span>
-            </div>
-          )}
-
-          {scanning && (
-            <>
-              <div className="absolute top-10 left-10 w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-2xl pointer-events-none z-30 opacity-60"></div>
-              <div className="absolute top-10 right-10 w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-2xl pointer-events-none z-30 opacity-60"></div>
-              <div className="absolute bottom-10 left-10 w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-2xl pointer-events-none z-30 opacity-60"></div>
-              <div className="absolute bottom-10 right-10 w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-2xl pointer-events-none z-30 opacity-60"></div>
-              <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-primary/60 shadow-[0_0_20px_var(--color-primary)] animate-scan z-30"></div>
-              <button onClick={stopScanner} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40 bg-error/10 hover:bg-error/20 text-error-fixed px-6 py-2.5 rounded-full border border-error/20 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl">Abort Operations</button>
-            </>
-          )}
-        </div>
-
-        {error && (
-          <div className="mt-8 p-5 bg-error/5 border border-error/10 rounded-[2rem] flex items-center gap-4 w-full animate-in fade-in slide-in-from-top-2">
-            <span className="material-symbols-outlined text-error" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
-            <p className="text-error text-[11px] font-bold uppercase tracking-wide">{error}</p>
-          </div>
-        )}
-
-        {/* Unified Action Box (Handshake + Marketplace) */}
-        <div className="mt-12 w-full max-w-sm bg-surface-container-low/60 backdrop-blur-3xl rounded-[2.5rem] border border-outline-variant/10 p-8 flex flex-col items-center gap-8 shadow-2xl relative overflow-hidden group">
-          {/* Subtle scanning glow inside box */}
-          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-pulse"></div>
+        {/* Unified Tactical Box */}
+        <div className="w-full max-w-md bg-surface-container-low/60 backdrop-blur-3xl rounded-[3rem] border border-outline-variant/10 shadow-[0_32px_128px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col items-center">
           
-          <div className="flex items-center gap-4 px-5 py-2 rounded-full bg-white/5 border border-white/5">
-            <div className={`w-2 h-2 rounded-full ${scanning ? 'bg-green-500 animate-pulse' : 'bg-primary/20'}`}></div>
-            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-on-surface-variant">
-              {scanning ? 'Handshake Active' : 'Waiting for Handshake'}
-            </span>
+          {/* Internal Viewport Layer */}
+          <div className="w-full relative aspect-square bg-black/40 flex items-center justify-center border-b border-white/5">
+            <div id="reader" className="w-full h-full absolute inset-0"></div>
+            <input type="file" ref={fileInputRef} onChange={handleFileUpload} accept="image/*" className="hidden" />
+
+            {!scanning && !initializing && (
+              <div className="z-20 text-center px-10">
+                 <div className="flex flex-col gap-4">
+                   <button onClick={startScanner} className="group bg-primary text-on-primary px-8 py-5 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-[0_12px_24px_rgba(var(--color-primary-rgb),0.3)]">
+                     <span className="material-symbols-outlined text-base">sensors</span>
+                     Initialize Scanner
+                   </button>
+
+                   <button onClick={() => fileInputRef.current?.click()} className="bg-white/5 text-on-surface px-8 py-5 rounded-2xl font-black text-[12px] uppercase tracking-widest hover:bg-white/10 transition-all flex items-center justify-center gap-3 border border-outline-variant/10">
+                     <span className="material-symbols-outlined text-base">cloud_upload</span>
+                     Upload Digital Pass
+                   </button>
+                 </div>
+                 
+                 <p className="mt-8 text-on-surface-variant/40 text-[9px] font-bold uppercase tracking-[0.4em] mb-2 font-mono">End-to-End Encrypted Handshake</p>
+              </div>
+            )}
+
+            {initializing && (
+              <div className="z-20 flex flex-col items-center gap-5">
+                 <div className="w-12 h-12 border-[5px] border-primary border-t-transparent rounded-full animate-spin"></div>
+                 <span className="text-[10px] uppercase tracking-[0.3em] font-black text-primary animate-pulse">Establishing Uplink...</span>
+              </div>
+            )}
+
+            {scanning && (
+              <>
+                <div className="absolute top-10 left-10 w-12 h-12 border-t-4 border-l-4 border-primary rounded-tl-2xl pointer-events-none z-30 opacity-60"></div>
+                <div className="absolute top-10 right-10 w-12 h-12 border-t-4 border-r-4 border-primary rounded-tr-2xl pointer-events-none z-30 opacity-60"></div>
+                <div className="absolute bottom-10 left-10 w-12 h-12 border-b-4 border-l-4 border-primary rounded-bl-2xl pointer-events-none z-30 opacity-60"></div>
+                <div className="absolute bottom-10 right-10 w-12 h-12 border-b-4 border-r-4 border-primary rounded-br-2xl pointer-events-none z-30 opacity-60"></div>
+                <div className="absolute top-1/2 left-0 w-full h-[1.5px] bg-primary/60 shadow-[0_0_20px_var(--color-primary)] animate-scan z-30"></div>
+                <button onClick={stopScanner} className="absolute bottom-10 left-1/2 -translate-x-1/2 z-40 bg-error/10 hover:bg-error/20 text-error-fixed px-6 py-2.5 rounded-full border border-error/20 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-xl">Abort Operations</button>
+              </>
+            )}
           </div>
-          
-          <div className="flex flex-col items-center gap-4 w-full">
-            <p className="text-on-surface-variant/40 text-[9px] font-black uppercase tracking-[0.4em] font-mono">No Tactical Pass Found?</p>
-            <button 
-              onClick={() => router.push('/guest/login')}
-              className="w-full bg-primary/10 hover:bg-primary/20 text-primary px-8 py-4 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-primary/20 hover:border-primary/40 active:scale-95 group/btn"
-            >
-              <span className="material-symbols-outlined text-sm group-hover/btn:translate-x-0.5 transition-transform">login</span>
-              Sign In to Marketplace
-            </button>
+
+          {/* Action Zone (Now Inside the Box) */}
+          <div className="w-full pt-4 pb-8 px-8 flex flex-col items-center gap-5 relative border-t border-white/5 bg-white/[0.02]">
+            {/* Subtle scanning glow inside box */}
+            <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-pulse"></div>
+            
+            <div className="flex items-center gap-4 px-5 py-2 rounded-full bg-white/5 border border-white/5 shadow-inner">
+              <div className={`w-2 h-2 rounded-full ${scanning ? 'bg-green-500 animate-pulse' : 'bg-primary/20'}`}></div>
+              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-on-surface-variant">
+                {scanning ? 'Handshake Active' : 'Waiting for Handshake'}
+              </span>
+            </div>
+            
+            <div className="flex flex-col items-center gap-2 w-full">
+              <p className="text-on-surface-variant/40 text-[9px] font-black uppercase tracking-[0.4em] font-mono italic scale-90">No Tactical Pass Found?</p>
+              <button 
+                onClick={() => router.push('/guest/login')}
+                className="w-full bg-primary/10 hover:bg-primary/20 text-primary px-8 py-5 rounded-2xl font-black text-[11px] uppercase tracking-[0.3em] transition-all flex items-center justify-center gap-4 border border-primary/20 hover:border-primary/40 active:scale-95 group/btn"
+              >
+                <span className="material-symbols-outlined text-sm group-hover/btn:translate-x-0.5 transition-transform">login</span>
+                Sign In to Marketplace
+              </button>
+            </div>
           </div>
         </div>
       </div>
