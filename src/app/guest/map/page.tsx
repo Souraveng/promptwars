@@ -14,6 +14,7 @@ export default function GuestMapPage() {
   const { activeTicket } = useGuest();
   const [layoutElements, setLayoutElements] = useState<any[]>([]);
   const [showMiniMap, setShowMiniMap] = useState(false);
+  const [isCardVisible, setIsCardVisible] = useState(true);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
@@ -177,8 +178,18 @@ export default function GuestMapPage() {
       </div>
 
       {/* Info Overlay: Route Card */}
-      <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-lg z-20 transition-all duration-500 ${showMiniMap ? 'opacity-0 translate-y-10 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
+      <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-32px)] max-w-lg z-20 transition-all duration-500 
+        ${showMiniMap ? 'opacity-0 translate-y-10 pointer-events-none' : isCardVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20 pointer-events-none'}`}>
         <div className="bg-[#1A1C24]/80 backdrop-blur-2xl rounded-3xl overflow-hidden relative border-t border-white/10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] px-1 pt-1">
+          {/* Close button inside card */}
+          <button 
+            onClick={() => setIsCardVisible(false)}
+            className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-on-surface-variant/40 hover:text-on-surface transition-colors"
+            title="Minimize"
+          >
+            <span className="material-symbols-outlined text-sm">keyboard_double_arrow_down</span>
+          </button>
+
           {/* Scanning line effect */}
           <div className="absolute left-0 -top-[100px] w-full h-[100px] bg-gradient-to-b from-transparent via-[rgba(59,130,246,0.1)] to-transparent pointer-events-none animate-[scan_4s_linear_infinite]"></div>
           
@@ -234,6 +245,18 @@ export default function GuestMapPage() {
         </div>
       </div>
       
+      {/* Restore Card Floating Action */}
+      <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 z-20 transition-all duration-500 ${!isCardVisible && !showMiniMap ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}>
+        <button 
+          onClick={() => setIsCardVisible(true)}
+          className="bg-primary/20 backdrop-blur-xl border border-primary/40 px-6 py-3 rounded-full flex items-center gap-3 shadow-[0_0_30px_rgba(59,130,246,0.3)] hover:bg-primary/30 active:scale-95 transition-all group"
+        >
+          <div className="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+          <span className="text-[10px] font-black text-on-surface uppercase tracking-[0.3em]">Show Mission Data</span>
+          <span className="material-symbols-outlined text-sm group-hover:-translate-y-0.5 transition-transform">keyboard_double_arrow_up</span>
+        </button>
+      </div>
+
       {/* Contextual Telemetry */}
       <div className={`hidden md:flex fixed right-6 top-64 flex-col gap-6 w-48 z-40 transition-all duration-500 ${showMiniMap ? 'opacity-0 translate-x-10 pointer-events-none' : 'opacity-100 translate-x-0'}`}>
         <div className="bg-surface-container-high/40 backdrop-blur-md p-3 rounded-lg border-l border-primary/20 shadow-xl">
