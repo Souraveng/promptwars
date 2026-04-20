@@ -83,7 +83,7 @@ export default function AlertsPage() {
   };
 
   return (
-    <div className="flex flex-col bg-background relative max-w-7xl mx-auto z-10 w-full p-4 sm:p-6 h-[calc(100vh-100px)] overflow-hidden">
+    <div className="flex flex-col bg-background relative max-w-7xl mx-auto z-10 w-full p-4 sm:p-6 pb-12">
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
         <div>
