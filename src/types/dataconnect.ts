@@ -131,6 +131,12 @@ export interface GetTicketData {
     event: Event;
   } | null;
 }
+
+export interface ClaimTicketVariables {
+  id: string;
+  userId: string;
+}
+
 export interface GetSystemAlertsData {
   eventAlerts: EmergencyEvent[];
   communityAlerts: EmergencyEvent[];

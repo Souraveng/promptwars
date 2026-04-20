@@ -162,7 +162,7 @@ export default function QRScannerPage() {
           </div>
         )}
 
-        <div className="mt-14 w-full flex flex-col items-center gap-10">
+        <div className="mt-14 w-full flex flex-col items-center gap-6">
           <div className="flex items-center gap-4 px-6 py-2.5 rounded-full bg-surface-container-highest/20 border border-outline-variant/10 backdrop-blur-md">
             <div className={`w-2.5 h-2.5 rounded-full ${scanning ? 'bg-green-500 animate-pulse' : 'bg-primary/20'}`}></div>
             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-on-surface-variant">
@@ -170,12 +170,13 @@ export default function QRScannerPage() {
             </span>
           </div>
           
-          <div className="flex flex-col items-center gap-4 w-full">
-            <p className="text-on-surface-variant/40 text-[10px] font-black uppercase tracking-[0.2em]">No Pass Found?</p>
+          <div className="flex flex-col items-center gap-4 w-full pt-4 border-t border-white/5 mt-4">
+            <p className="text-on-surface-variant/40 text-[9px] font-black uppercase tracking-[0.4em] mb-2 font-mono">No Tactical Pass Found?</p>
             <button 
               onClick={() => router.push('/guest/login')}
-              className="w-full max-w-[280px] bg-white/5 hover:bg-white/10 text-on-surface px-8 py-5 rounded-2xl font-black text-[12px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-outline-variant/10 shadow-xl"
+              className="w-full max-w-[320px] bg-primary/10 hover:bg-primary/20 text-primary px-8 py-4 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-primary/20 shadow-2xl active:scale-95 group"
             >
+              <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">login</span>
               Sign In to Marketplace
             </button>
           </div>
