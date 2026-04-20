@@ -17,28 +17,38 @@ export const MAP_LIBRARIES: ("places" | "marker" | "visualization")[] = ["places
 export const DEFAULT_MAP_ID = '8e0a97af9386f9';
 
 // Initialize Firebase securely (prevent overlapping multiple instances in Next.js Dev Mode)
-let app;
+let app: FirebaseApp | undefined;
+let auth: Auth | undefined;
+let storage: FirebaseStorage | undefined;
+let dataconnect: DataConnect | undefined;
+
 try {
   app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  auth = getAuth(app);
+  storage = getStorage(app);
+  dataconnect = getDataConnect(app, {
+    service: "promptwar",
+    location: "us-central1",
+    connector: "example"
+  });
 } catch (e) {
   // Silent during build-time evaluation if config is missing
 }
 
-export const auth = app ? getAuth(app) : undefined as any;
-export const storage = app ? getStorage(app) : undefined as any;
-export const dataconnect = app ? getDataConnect(app, {
-  service: "promptwar",
-  location: "us-central1",
-  connector: "example"
-}) : undefined as any;
+export { auth, storage, dataconnect };
 
 // Connect to emulator in development
 if (process.env.NODE_ENV !== 'production') {
   // Use explicit IP to avoid 'localhost' resolution inconsistencies
   const host = '127.0.0.1';
-  console.info(`[Firebase] Connecting to Data Connect Emulator at ${host}:9399`);
-  connectDataConnectEmulator(dataconnect, host, 9399);
   
-  console.info(`[Firebase] Connecting to Storage Emulator at ${host}:9199`);
-  connectStorageEmulator(storage, host, 9199);
+  if (dataconnect) {
+    console.info(`[Firebase] Connecting to Data Connect Emulator at ${host}:9399`);
+    connectDataConnectEmulator(dataconnect, host, 9399);
+  }
+  
+  if (storage) {
+    console.info(`[Firebase] Connecting to Storage Emulator at ${host}:9199`);
+    connectStorageEmulator(storage, host, 9199);
+  }
 }
