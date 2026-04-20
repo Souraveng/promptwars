@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { dataconnect, GOOGLE_MAPS_API_KEY, MAP_LIBRARIES, DEFAULT_MAP_ID } from '@/lib/firebase-client';
 import { executeQuery, queryRef } from 'firebase/data-connect';
 import { ListEventsData, GetEmergencyEventsData, Event, EmergencyEvent } from '@/types/dataconnect';
-import { GoogleMap, useJsApiLoader, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, InfoWindow, HeatmapLayer } from '@react-google-maps/api';
 
 const MAP_ID = DEFAULT_MAP_ID;
 
@@ -167,6 +167,20 @@ export default function AdminMonitorPage() {
               streetViewControl: false
             }}
           >
+            {/* Heatmap Layer for Aggregate Density */}
+            {emergencyEvents.length > 0 && (
+              <HeatmapLayer 
+                data={emergencyEvents
+                  .filter(e => e.lat && e.lng)
+                  .map(e => new google.maps.LatLng(e.lat!, e.lng!))
+                }
+                options={{
+                  radius: 30,
+                  opacity: 0.5
+                }}
+              />
+            )}
+
             <AdvancedMarker 
               map={map}
               position={{ lat: selectedEvent.venueLat, lng: selectedEvent.venueLng }}

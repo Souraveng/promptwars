@@ -1,266 +1,246 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { GoogleMap, useJsApiLoader, HeatmapLayer } from '@react-google-maps/api';
+import { dataconnect, GOOGLE_MAPS_API_KEY, MAP_LIBRARIES, DEFAULT_MAP_ID } from '@/lib/firebase-client';
+import { executeQuery, queryRef } from 'firebase/data-connect';
+import { GetEmergencyEventsData, EmergencyEvent } from '@/types/dataconnect';
+import { useGuest } from '@/app/guest/GuestContext';
+import { useLocation } from '@/hooks/useLocation';
+
+const MAP_ID = DEFAULT_MAP_ID;
 
 export default function GuestCrowdPage() {
+  const router = useRouter();
+  const { activeTicket, loading: contextLoading } = useGuest();
+  const { lat: userLat, lng: userLng, getLocation } = useLocation();
+  const [incidents, setIncidents] = useState<EmergencyEvent[]>([]);
+  const [isNearCrowd, setIsNearCrowd] = useState(false);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+
+  // Authorization Guard
+  useEffect(() => {
+    if (contextLoading) return;
+    const now = new Date();
+    const isExpired = activeTicket?.event?.expiryDate && new Date(activeTicket.event.expiryDate) < now;
+    const isEventActive = activeTicket?.event?.isActive;
+    const isValid = activeTicket && isEventActive && !isExpired;
+
+    if (!isValid) {
+      router.replace('/guest/dashboard?locked=true');
+    }
+  }, [activeTicket, contextLoading, router]);
+
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: MAP_LIBRARIES
+  });
+
+  // Polling for Crowd Indicators
+  useEffect(() => {
+    if (!activeTicket?.eventId) return;
+
+    const fetchCrowdData = async () => {
+      try {
+        const qRef = queryRef<GetEmergencyEventsData, { eventId: string }>(dataconnect, 'GetEmergencyEvents', { eventId: activeTicket.eventId });
+        const result = await executeQuery(qRef);
+        if (result.data?.emergencyEvents) {
+          // Filter for crowd-related reports
+          const crowdEvents = result.data.emergencyEvents.filter(e => 
+            e.type.includes('CROWD') || e.type.includes('BOTTLENECK') || e.type.includes('CONGESTION')
+          );
+          setIncidents(crowdEvents);
+        }
+      } catch (err) {
+        console.error('Failed to fetch crowd data:', err);
+      }
+    };
+
+    fetchCrowdData();
+    const timer = setInterval(fetchCrowdData, 10000); // 10s polling
+    return () => clearInterval(timer);
+  }, [activeTicket]);
+
+  // Proximity Alert Logic
+  useEffect(() => {
+    if (!userLat || !userLng || incidents.length === 0) {
+      setIsNearCrowd(false);
+      return;
+    }
+
+    const checkProximity = () => {
+      const threshold = 0.0005; // ~50 meters approx
+      const nearby = incidents.some(incident => {
+        if (!incident.lat || !incident.lng) return false;
+        const dLat = Math.abs(incident.lat - userLat);
+        const dLng = Math.abs(incident.lng - userLng);
+        return dLat < threshold && dLng < threshold;
+      });
+      setIsNearCrowd(nearby);
+    };
+
+    checkProximity();
+  }, [userLat, userLng, incidents]);
+
+  // Heatmap Data Points
+  const heatmapData = useMemo(() => {
+    if (!incidents.length) return [];
+    return incidents
+      .filter(i => i.lat && i.lng)
+      .map(i => new google.maps.LatLng(i.lat!, i.lng!));
+  }, [incidents]);
+
+  if (!isLoaded || contextLoading) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-[#0B1326] min-h-screen">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4 text-xs font-bold text-primary tracking-widest uppercase">Initializing Tactical Visualization</p>
+      </div>
+    );
+  }
+
   return (
-    <main className="px-4 md:px-12 max-w-7xl mx-auto space-y-8 pt-8">
+    <div className="bg-surface text-on-surface min-h-screen w-full flex flex-col relative overflow-hidden font-body">
+      {/* Background Texture Overlay */}
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-[0.03]" data-alt="high-tech grid overlay"></div>
+
       {/* Hero Telemetry Section */}
-      <section className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Occupancy Readout */}
-        <div className="md:col-span-4 bg-surface-container-low p-8 relative overflow-hidden flex flex-col justify-between min-h-[320px]">
-          <div className="absolute left-0 w-full h-[1px] bg-[rgba(194,198,214,0.05)] top-0 pointer-events-none animate-[scan_3s_linear_infinite]"></div>
+      <main className="flex-1 flex flex-col p-4 md:p-8 space-y-6 z-10 overflow-y-auto">
+        <header className="flex justify-between items-end border-b border-outline-variant/10 pb-4">
           <div>
-            <span className="font-label text-[10px] uppercase tracking-[0.2em] text-on-surface-variant/60 block mb-2">System Status: Tactical Overlay</span>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_#4edea3]"></div>
-              <span className="font-label text-[10px] uppercase font-bold tracking-tighter text-secondary">Live Telemetry Active</span>
-            </div>
+            <h1 className="font-headline text-2xl font-bold tracking-tight text-on-surface">Crowd Monitor</h1>
+            <p className="font-label text-[10px] uppercase tracking-[0.3em] text-on-surface-variant flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${isNearCrowd ? 'bg-tertiary animate-ping' : 'bg-secondary'}`}></span>
+              {isNearCrowd ? 'High Density Alert' : 'Area Status: Nominal'}
+            </p>
           </div>
-          <div className="mt-auto">
-            <h1 className="font-headline text-7xl font-bold tracking-tighter text-on-surface">84<span className="text-3xl text-surface-tint opacity-50">%</span></h1>
-            <p className="font-label text-xs uppercase tracking-widest text-on-surface-variant">Total Occupancy</p>
-            <div className="mt-4 flex gap-1">
-              <div className="h-1 flex-1 bg-secondary shadow-[0_0_10px_rgba(78,222,163,0.3)]"></div>
-              <div className="h-1 flex-1 bg-secondary shadow-[0_0_10px_rgba(78,222,163,0.3)]"></div>
-              <div className="h-1 flex-1 bg-secondary shadow-[0_0_10px_rgba(78,222,163,0.3)]"></div>
-              <div className="h-1 flex-1 bg-tertiary-container/30"></div>
-              <div className="h-1 flex-1 bg-tertiary-container/10"></div>
-            </div>
+          <div className="text-right">
+             <span className="font-label text-[9px] uppercase tracking-widest text-on-surface-variant/60 block mb-1">Last Update</span>
+             <span className="font-mono text-xs text-on-surface/80">{new Date().toLocaleTimeString()}</span>
           </div>
-        </div>
+        </header>
 
-        {/* Main Heatmap Container */}
-        <div className="md:col-span-8 bg-[#222a3e]/60 backdrop-blur-xl p-6 relative overflow-hidden flex flex-col min-h-[320px]">
-          <div className="flex justify-between items-start mb-4 z-10">
-            <div className="space-y-1">
-              <h2 className="font-headline text-lg uppercase tracking-widest text-on-surface">Heatmap_01</h2>
-              <div className="flex items-center gap-4 text-[10px] font-mono text-on-surface-variant/40">
-                <span>LAT: 34.0522° N</span>
-                <span>LNG: 118.2437° W</span>
-              </div>
+        {/* Tactical Alerts Banner */}
+        {isNearCrowd && (
+          <div className="bg-tertiary/10 border border-tertiary/40 p-4 rounded-xl flex items-center gap-4 animate-pulse">
+            <span className="material-symbols-outlined text-tertiary text-3xl">warning</span>
+            <div>
+              <h3 className="font-headline text-sm font-bold text-tertiary uppercase">Proximity Warning</h3>
+              <p className="text-xs text-on-surface-variant">Elevated crowd density detected within 50 meters of your position. Exercise caution.</p>
             </div>
-            <div className="flex gap-2">
-              <button className="bg-surface-container-highest p-2 rounded hover:bg-primary/20 transition-colors">
-                <span className="material-symbols-outlined text-sm" data-icon="zoom_in">zoom_in</span>
+          </div>
+        )}
+
+        {/* Map Container */}
+        <section className="flex-1 min-h-[400px] relative rounded-3xl overflow-hidden glass-card border border-outline-variant/10 shadow-2xl">
+           <GoogleMap
+            mapContainerStyle={{ width: '100%', height: '100%' }}
+            center={{ 
+              lat: activeTicket?.event?.venueLat || 34.0522, 
+              lng: activeTicket?.event?.venueLng || -118.2437 
+            }}
+            zoom={16}
+            onLoad={setMap}
+            options={{
+              mapId: MAP_ID,
+              disableDefaultUI: false,
+              mapTypeControl: false,
+              streetViewControl: false,
+              styles: [
+                {
+                  "elementType": "geometry",
+                  "stylers": [{ "color": "#121a2f" }]
+                }
+              ]
+            }}
+          >
+            {/* User Presence (Privacy Compliant - Only show the current user to themselves) */}
+            {userLat && userLng && (
+              <div className="relative">
+                {/* Visual marker implementation via custom component or OverlayView would go here if needed, 
+                    but for now we focus on the Heatmap data provided by incidents */}
+              </div>
+            )}
+
+            {/* Anonymous Heatmap Layer */}
+            {heatmapData.length > 0 && (
+              <HeatmapLayer 
+                data={heatmapData}
+                options={{
+                  radius: 40,
+                  opacity: 0.6,
+                  gradient: [
+                    'rgba(0, 255, 255, 0)',
+                    'rgba(0, 255, 255, 1)',
+                    'rgba(0, 191, 255, 1)',
+                    'rgba(0, 127, 255, 1)',
+                    'rgba(0, 63, 255, 1)',
+                    'rgba(0, 0, 255, 1)',
+                    'rgba(0, 0, 223, 1)',
+                    'rgba(0, 0, 191, 1)',
+                    'rgba(0, 0, 159, 1)',
+                    'rgba(0, 0, 127, 1)',
+                    'rgba(63, 0, 91, 1)',
+                    'rgba(127, 0, 63, 1)',
+                    'rgba(191, 0, 31, 1)',
+                    'rgba(255, 0, 0, 1)'
+                  ]
+                }}
+              />
+            )}
+          </GoogleMap>
+
+          {/* Quick HUD Overlay */}
+          <div className="absolute bottom-4 left-4 right-4 flex gap-2 pointer-events-none">
+             <div className="bg-[#0B1326]/80 backdrop-blur-md px-4 py-2 rounded-xl border border-outline-variant/20 shadow-lg pointer-events-auto">
+                <span className="font-label text-[9px] text-on-surface-variant uppercase block mb-1">Active Event</span>
+                <span className="font-headline text-sm font-bold text-on-surface">{activeTicket?.event?.title || 'Unknown Deployment'}</span>
+             </div>
+             <div className="bg-[#0B1326]/80 backdrop-blur-md px-4 py-2 rounded-xl border border-outline-variant/20 shadow-lg pointer-events-auto text-right ml-auto">
+                <span className="font-label text-[9px] text-on-surface-variant uppercase block mb-1">Density Index</span>
+                <span className={`font-headline text-sm font-bold ${isNearCrowd ? 'text-tertiary' : 'text-secondary'}`}>
+                  {isNearCrowd ? 'CRITICAL' : 'OPTIMAL'}
+                </span>
+             </div>
+          </div>
+        </section>
+
+        {/* Analytics Breakdown */}
+        <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+           <div className="glass-card p-5 rounded-2xl border border-outline-variant/10">
+              <h3 className="font-headline text-xs uppercase tracking-widest text-on-surface-variant mb-4">Flow Predictor</h3>
+              <div className="space-y-4">
+                 <div className="flex items-center justify-between">
+                    <span className="text-xs text-on-surface/60 font-medium">Main Gate Density</span>
+                    <span className="text-xs font-bold text-secondary">Nominal</span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <span className="text-xs text-on-surface/60 font-medium">Concourse Flow</span>
+                    <span className="text-xs font-bold text-primary">Balanced</span>
+                 </div>
+                 <div className="flex items-center justify-between">
+                    <span className="text-xs text-on-surface/60 font-medium">Sector G Bottleneck</span>
+                    <span className="text-xs font-bold text-tertiary">Reported</span>
+                 </div>
+              </div>
+           </div>
+
+           <div className="glass-card p-5 rounded-2xl border border-outline-variant/10 flex flex-col justify-between">
+              <h3 className="font-headline text-xs uppercase tracking-widest text-on-surface-variant mb-4">Tactical Guidance</h3>
+              <p className="text-xs text-on-surface-variant leading-relaxed">
+                Sentinel Lens recommends utilizing <span className="text-primary font-bold">North Gate Sector 4</span> for minimal wait times. Total venue occupancy estimated at <span className="text-on-surface font-bold">68%</span>.
+              </p>
+              <button 
+                onClick={() => router.push('/guest/map')}
+                className="mt-4 w-full py-3 bg-surface-container-highest rounded-lg font-label text-[10px] uppercase font-heavy tracking-[0.2em] hover:bg-primary transition-all duration-300"
+              >
+                View Navigation Map
               </button>
-              <button className="bg-surface-container-highest p-2 rounded hover:bg-primary/20 transition-colors">
-                <span className="material-symbols-outlined text-sm" data-icon="layers">layers</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Abstract Heatmap UI */}
-          <div className="flex-grow relative bg-surface-container-lowest overflow-hidden rounded-lg">
-            <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#dbe2fd 0.5px, transparent 0.5px)', backgroundSize: '20px 20px' }}></div>
-            {/* Glow Nodes */}
-            <div className="absolute top-1/4 left-1/3 w-48 h-48 rounded-full bg-secondary blur-[40px] opacity-50"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-64 h-64 rounded-full bg-tertiary blur-[40px] opacity-50"></div>
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 rounded-full bg-primary blur-[40px] opacity-50"></div>
-            
-            {/* Venue Outline Map (Abstract) */}
-            <div className="absolute inset-8 border border-on-surface-variant/10 rounded-3xl flex items-center justify-center">
-              <img alt="Venue Schematic" className="w-full h-full object-cover opacity-20 mix-blend-screen" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDgvFRXtGer0N6zRuZjJqdBPGfj0_85vTWIcnFxXt2r4ZlIOEXBRPHK0eE8-hsDmlUKmFrIn8jek7vd-MQ-3nWn9Yc1JBHUMe8mb5UFEdeF8tj8zDWRCxl0_ukrFz4fiFd8BVLjet0boYFsFsyfJQIbvrIJJXbmu1Q-yGw6eeZu7oldbOhzjCimOGYuiAHgBwulvAWpkjaXFmeSsFoHZQ1C5EBb1zqZn6Vu6cyvpCowB1Y5YszTNmMrA7WyNNWEt-4_mbgJsXv8PBHD"/>
-            </div>
-            
-            {/* Scan Line Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent h-[50%] w-full animate-pulse pointer-events-none"></div>
-          </div>
-        </div>
-      </section>
-
-      {/* Zone Telemetry List */}
-      <section className="space-y-6">
-        <div className="flex items-end justify-between border-b border-outline-variant/20 pb-4">
-          <div>
-            <h3 className="font-headline text-2xl font-bold text-on-surface">Zone Analytics</h3>
-            <p className="font-label text-xs text-on-surface-variant tracking-wider uppercase">Terminal Log: Real-Time Flow Analysis</p>
-          </div>
-          <div className="flex gap-4 text-xs font-bold uppercase tracking-tighter">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-secondary"></span>
-              <span className="text-secondary">Nominal</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 bg-tertiary"></span>
-              <span className="text-tertiary">Critical</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Zone Card 1: Critical */}
-          <div className="bg-surface-container p-5 relative group transition-all hover:bg-surface-container-high">
-            <div className="absolute right-0 top-0 w-[2px] h-full bg-tertiary opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <span className="font-label text-[10px] text-tertiary uppercase font-black tracking-widest block mb-1">Density Peak</span>
-                <h4 className="font-headline text-lg font-bold">Main Concourse</h4>
-              </div>
-              <span className="material-symbols-outlined text-tertiary text-2xl" data-icon="warning" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <div className="space-y-1">
-                <p className="text-[10px] font-mono text-on-surface-variant/50">FLOW_RATE: HIGH</p>
-                <p className="text-[10px] font-mono text-on-surface-variant/50">WAIT_TIME: 14M</p>
-              </div>
-              <div className="text-right">
-                <span className="font-headline text-3xl font-bold text-tertiary">92%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Zone Card 2: Nominal */}
-          <div className="bg-surface-container p-5 relative group transition-all hover:bg-surface-container-high">
-            <div className="absolute right-0 top-0 w-[2px] h-full bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <span className="font-label text-[10px] text-secondary uppercase font-black tracking-widest block mb-1">Operational</span>
-                <h4 className="font-headline text-lg font-bold">Section 112-115</h4>
-              </div>
-              <span className="material-symbols-outlined text-secondary text-2xl" data-icon="check_circle" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <div className="space-y-1">
-                <p className="text-[10px] font-mono text-on-surface-variant/50">FLOW_RATE: STEADY</p>
-                <p className="text-[10px] font-mono text-on-surface-variant/50">WAIT_TIME: 2M</p>
-              </div>
-              <div className="text-right">
-                <span className="font-headline text-3xl font-bold text-secondary">41%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Zone Card 3: Warning */}
-          <div className="bg-surface-container p-5 relative group transition-all hover:bg-surface-container-high">
-            <div className="absolute right-0 top-0 w-[2px] h-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <span className="font-label text-[10px] text-primary uppercase font-black tracking-widest block mb-1">Elevating</span>
-                <h4 className="font-headline text-lg font-bold">VIP Lounge South</h4>
-              </div>
-              <span className="material-symbols-outlined text-primary text-2xl" data-icon="trending_up">trending_up</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <div className="space-y-1">
-                <p className="text-[10px] font-mono text-on-surface-variant/50">FLOW_RATE: RISING</p>
-                <p className="text-[10px] font-mono text-on-surface-variant/50">WAIT_TIME: 5M</p>
-              </div>
-              <div className="text-right">
-                <span className="font-headline text-3xl font-bold text-primary">68%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Zone Card 4: Nominal */}
-          <div className="bg-surface-container p-5 relative group transition-all hover:bg-surface-container-high">
-            <div className="absolute right-0 top-0 w-[2px] h-full bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <span className="font-label text-[10px] text-secondary uppercase font-black tracking-widest block mb-1">Operational</span>
-                <h4 className="font-headline text-lg font-bold">North Gate Entry</h4>
-              </div>
-              <span className="material-symbols-outlined text-secondary text-2xl" data-icon="check_circle" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <div className="space-y-1">
-                <p className="text-[10px] font-mono text-on-surface-variant/50">FLOW_RATE: LOW</p>
-                <p className="text-[10px] font-mono text-on-surface-variant/50">WAIT_TIME: &lt;1M</p>
-              </div>
-              <div className="text-right">
-                <span className="font-headline text-3xl font-bold text-secondary">24%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Zone Card 5: Critical */}
-          <div className="bg-surface-container p-5 relative group transition-all hover:bg-surface-container-high">
-            <div className="absolute right-0 top-0 w-[2px] h-full bg-tertiary opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <span className="font-label text-[10px] text-tertiary uppercase font-black tracking-widest block mb-1">Density Peak</span>
-                <h4 className="font-headline text-lg font-bold">Food Court Alpha</h4>
-              </div>
-              <span className="material-symbols-outlined text-tertiary text-2xl" data-icon="warning" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <div className="space-y-1">
-                <p className="text-[10px] font-mono text-on-surface-variant/50">FLOW_RATE: MAX</p>
-                <p className="text-[10px] font-mono text-on-surface-variant/50">WAIT_TIME: 18M</p>
-              </div>
-              <div className="text-right">
-                <span className="font-headline text-3xl font-bold text-tertiary">88%</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Zone Card 6: Nominal */}
-          <div className="bg-surface-container p-5 relative group transition-all hover:bg-surface-container-high">
-            <div className="absolute right-0 top-0 w-[2px] h-full bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <span className="font-label text-[10px] text-secondary uppercase font-black tracking-widest block mb-1">Operational</span>
-                <h4 className="font-headline text-lg font-bold">West Bleachers</h4>
-              </div>
-              <span className="material-symbols-outlined text-secondary text-2xl" data-icon="check_circle" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-            </div>
-            <div className="flex justify-between items-end">
-              <div className="space-y-1">
-                <p className="text-[10px] font-mono text-on-surface-variant/50">FLOW_RATE: BALANCED</p>
-                <p className="text-[10px] font-mono text-on-surface-variant/50">WAIT_TIME: 3M</p>
-              </div>
-              <div className="text-right">
-                <span className="font-headline text-3xl font-bold text-secondary">55%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* System Intelligence Bento */}
-      <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-surface-container-high/40 p-6 rounded-lg backdrop-blur-md">
-          <h3 className="font-headline text-sm uppercase tracking-widest mb-6">Predictive Analytics</h3>
-          <div className="space-y-6">
-            <div className="flex items-center gap-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded bg-surface-container-highest flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary" data-icon="timer">timer</span>
-              </div>
-              <div className="flex-grow">
-                <p className="text-xs text-on-surface-variant mb-1">Estimated Peak Flow</p>
-                <p className="font-headline font-bold text-lg">13:15 UTC <span className="text-xs font-normal text-on-surface-variant/60 tracking-widest">(+27m)</span></p>
-              </div>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex-shrink-0 w-12 h-12 rounded bg-surface-container-highest flex items-center justify-center">
-                <span className="material-symbols-outlined text-secondary" data-icon="trending_down">trending_down</span>
-              </div>
-              <div className="flex-grow">
-                <p className="text-xs text-on-surface-variant mb-1">Cool-off Vector</p>
-                <p className="font-headline font-bold text-lg">East Corridors <span className="text-xs font-normal text-secondary tracking-widest">CLEARING</span></p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-surface-container-high/40 p-6 rounded-lg backdrop-blur-md border border-outline-variant/10">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="font-headline text-sm uppercase tracking-widest">Active Alerts</h3>
-            <span className="px-2 py-0.5 bg-tertiary text-on-tertiary text-[10px] font-black rounded-sm">2 LIVE</span>
-          </div>
-          <div className="space-y-3">
-            <div className="p-3 bg-surface-container-lowest border-l-2 border-tertiary flex items-center justify-between">
-              <p className="text-xs font-mono uppercase tracking-tighter text-on-surface">Bottleneck: Gate 4 Over-capacity</p>
-              <span className="text-[10px] font-mono text-tertiary">02:11 AGO</span>
-            </div>
-            <div className="p-3 bg-surface-container-lowest border-l-2 border-tertiary/40 flex items-center justify-between">
-              <p className="text-xs font-mono uppercase tracking-tighter text-on-surface/60">Crowd Surge: Concourse B</p>
-              <span className="text-[10px] font-mono text-on-surface-variant/40">04:45 AGO</span>
-            </div>
-          </div>
-          <button className="w-full mt-6 py-3 bg-surface-container-highest font-headline text-[10px] uppercase tracking-[0.3em] font-bold hover:bg-primary hover:text-on-primary transition-all duration-300">
-            Dispatch Security Team
-          </button>
-        </div>
-      </section>
-    </main>
+           </div>
+        </section>
+      </main>
+    </div>
   );
 }

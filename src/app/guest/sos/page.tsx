@@ -10,7 +10,7 @@ import { GetActiveEventData, LogEmergencyEventVariables } from '@/types/dataconn
 
 export default function GuestSOSPage() {
   const router = useRouter();
-  const { activeTicket } = useGuest();
+  const { activeTicket, loading } = useGuest();
   const { lat, lng, getLocation, isMock } = useLocation();
   const [isHolding, setIsHolding] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -21,6 +21,8 @@ export default function GuestSOSPage() {
 
   // Authorization Guard
   useEffect(() => {
+    if (loading) return;
+    
     const now = new Date();
     const isExpired = activeTicket?.event?.expiryDate && new Date(activeTicket.event.expiryDate) < now;
     const isEventActive = activeTicket?.event?.isActive;
@@ -29,7 +31,7 @@ export default function GuestSOSPage() {
     if (!isValid) {
       router.replace('/guest/dashboard?locked=true');
     }
-  }, [activeTicket, router]);
+  }, [activeTicket, loading, router]);
 
   const HOLD_DURATION = 3000; // 3 seconds
 

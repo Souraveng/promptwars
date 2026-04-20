@@ -13,7 +13,7 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-L5GG7XT1Y2"
 };
 export const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || firebaseConfig.apiKey;
-export const MAP_LIBRARIES: ("places" | "marker")[] = ["places", "marker"];
+export const MAP_LIBRARIES: ("places" | "marker" | "visualization")[] = ["places", "marker", "visualization"];
 export const DEFAULT_MAP_ID = '8e0a97af9386f9';
 
 // Initialize Firebase securely (prevent overlapping multiple instances in Next.js Dev Mode)
