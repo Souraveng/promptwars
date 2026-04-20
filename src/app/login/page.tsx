@@ -15,13 +15,14 @@ export default function LoginPage() {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     setError('');
-    const provider = new GoogleAuthProvider();
     try {
+      if (!auth) throw new Error('Tactical Auth-Link is offline. System requires deployment configuration.');
+      const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       router.push('/admin/monitor');
     } catch (err: any) {
       console.error(err);
-      setError('Google Sign-In failed: ' + err.message);
+      setError(err.message || 'Google Authentication failed');
       setLoading(false);
     }
   };

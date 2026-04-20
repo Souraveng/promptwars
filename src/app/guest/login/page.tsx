@@ -126,6 +126,7 @@ export default function GuestLoginPage() {
     setLoading(true);
     setError('');
     try {
+      if (!auth) throw new Error('Tactical Auth-Link is offline. System requires deployment configuration.');
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       // Logic for profile check will happen in the context/useEffect
@@ -141,6 +142,7 @@ export default function GuestLoginPage() {
     setError('');
 
     try {
+      if (!auth) throw new Error('Operation Failed: Local Auth node is offline.');
       if (mode === 'login') {
         await signInWithEmailAndPassword(auth, formData.email, formData.password);
       } else {
