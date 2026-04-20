@@ -507,7 +507,7 @@ export default function VenueBuilderPage() {
   const selectedEl = useMemo(() => elements.find(e => e.id === selectedIds[0]), [elements, selectedIds]);
 
   return (
-    <div className={`relative w-full h-full flex overflow-hidden text-on-surface font-sans transition-all duration-500 ${isFullscreen ? 'fixed inset-0 z-[9999]' : ''}`}>
+    <div className={`relative w-full flex overflow-hidden text-on-surface font-sans transition-all duration-500 ${isFullscreen ? 'fixed inset-0 z-[9999]' : 'h-[calc(100vh-4rem)]'}`}>
 
       <main className="flex-1 relative flex flex-col overflow-hidden bg-[#1a1d24]">
         {/* Workspace dot pattern */}
@@ -711,7 +711,7 @@ export default function VenueBuilderPage() {
       </main>
 
       {/* Property & AI Sidebar */}
-      <aside className={`w-80 bg-surface-container-high border-l border-outline-variant/10 flex flex-col z-[110] transition-all duration-300 ${((selectedIds.length > 0 || aiPanelOpen) && !isFullscreen) ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
+      <aside className={`w-80 bg-surface-container-high border-l border-outline-variant/10 flex flex-col z-[110] transition-all duration-300 h-full overflow-hidden ${((selectedIds.length > 0 || aiPanelOpen) && !isFullscreen) ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0 pointer-events-none'}`}>
         <div className="flex border-b border-outline-variant/10 h-14 shrink-0">
           <button onClick={() => setAiPanelOpen(false)} className={`flex-1 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all ${!aiPanelOpen ? 'text-primary bg-primary/5' : 'hover:bg-surface-container'}`}>
             <span className="material-symbols-outlined text-sm">settings</span> Properties
@@ -728,7 +728,7 @@ export default function VenueBuilderPage() {
                 <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-primary">Properties</h2>
                 <button onClick={() => setSelectedIds([])} className="material-symbols-outlined text-on-surface-variant hover:text-primary">close</button>
               </div>
-              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+              <div className="flex-1 overflow-y-auto p-6 space-y-8 min-h-0 pb-8" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(188,199,222,0.2) transparent' }}>
                 <div className="space-y-4">
                    <label className="block text-[10px] font-bold text-on-surface-variant tracking-widest uppercase mb-2">Name</label>
                    <input value={selectedEl.label} onChange={e => handleUpdate(selectedEl.id, { label: e.target.value })} className="w-full bg-surface-container-highest border border-outline-variant/10 rounded-xl px-4 py-3 text-sm focus:ring-1 focus:ring-primary/50 outline-none" />
