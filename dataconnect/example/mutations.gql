@@ -76,7 +76,9 @@ mutation IssueTicket(
     guestEmail: $guestEmail,
     userId: $userId,
     status: "ACTIVE"
-  })
+  }) {
+    id
+  }
 }
 
 # Venue Layout CRUD

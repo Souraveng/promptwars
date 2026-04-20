@@ -22,6 +22,7 @@ export default function GuestBookingPage() {
   const [layout, setLayout] = useState<any>(null);
   const [ticketCounts, setTicketCounts] = useState<Record<string, number>>({});
   const [selectedEl, setSelectedEl] = useState<any>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
   
   const [loading, setLoading] = useState(true);
   const [booking, setBooking] = useState(false);
@@ -114,9 +115,16 @@ export default function GuestBookingPage() {
         userId: user.uid
       });
 
-      await executeMutation(mRef);
+      const result = await executeMutation(mRef);
+      console.log('[GuestBooking] Ticket issued:', result.data);
+      
+      setIsSuccess(true);
       await refreshTickets();
-      router.push('/guest/dashboard');
+      
+      // Delay redirect to allow user to see success state
+      setTimeout(() => {
+        router.push('/guest/tickets');
+      }, 2000);
     } catch (err: any) {
       setError(err.message || 'Booking failed');
       setBooking(false);
@@ -226,6 +234,28 @@ export default function GuestBookingPage() {
           </div>
 
        </div>
+
+       {/* Success Overlay */}
+       {isSuccess && (
+         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-[#060D20]/90 backdrop-blur-md animate-in fade-in duration-500">
+           <div className="bg-[#0b1429] border border-primary/20 rounded-[3rem] p-12 text-center shadow-[0_0_100px_rgba(78,222,163,0.2)] max-w-md w-full relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
+              <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-8 border border-primary/20">
+                 <span className="material-symbols-outlined text-5xl text-primary animate-bounce">verified_user</span>
+              </div>
+              <h2 className="font-headline text-3xl font-black italic tracking-tighter text-on-surface uppercase mb-4">Deployment Certified</h2>
+              <p className="text-on-surface-variant text-sm font-medium uppercase tracking-[0.2em] opacity-60 leading-relaxed">
+                 Your tactical credentials have been generated and synced to the secure vault.
+              </p>
+              <div className="mt-12 flex flex-col gap-4">
+                 <div className="h-1 w-full bg-surface-container rounded-full overflow-hidden">
+                    <div className="h-full bg-primary animate-[shimmer_2s_infinite]" style={{ width: '100%' }} />
+                 </div>
+                 <p className="text-[10px] text-primary font-black uppercase tracking-[0.4em]">Redirecting to Secure Portfolio...</p>
+              </div>
+           </div>
+         </div>
+       )}
     </div>
   );
 }

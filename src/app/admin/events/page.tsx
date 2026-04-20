@@ -656,7 +656,16 @@ export default function EventManagementPage() {
         <header className="flex justify-between items-end">
           <div>
             <h2 className="text-3xl font-headline text-on-surface font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary-fixed-dim">Events Schedule</h2>
-            <p className="text-sm text-on-surface-variant mt-1">Manage tactical venue deployments.</p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-sm text-on-surface-variant">Manage tactical venue deployments.</p>
+              <div className="group relative">
+                <span className="material-symbols-outlined text-[14px] text-primary cursor-help">info</span>
+                <div className="absolute left-0 top-full mt-2 w-64 p-3 bg-surface-container-highest border border-outline-variant/20 rounded-xl shadow-2xl invisible group-hover:visible z-50 text-[10px] text-on-surface leading-relaxed uppercase tracking-widest font-bold animate-in fade-in slide-in-from-top-1">
+                  <p className="text-primary mb-1">PRO-TIP: Enabling Features</p>
+                  Setting an event to <span className="text-secondary">ACTIVE</span> enables the Tactical Map, SOS, and Crowd features for all operatives with a valid ticket for that context.
+                </div>
+              </div>
+            </div>
           </div>
           <button
             onClick={() => setShowModal(true)}

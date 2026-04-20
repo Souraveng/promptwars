@@ -75,9 +75,9 @@ export default function GuestDashboardPage() {
 
               <div className="flex-1 space-y-6 text-center md:text-left">
                 <div>
-                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/20 text-primary font-bold text-[10px] uppercase tracking-widest border border-primary/30 mb-4">
-                     <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                     LIVE ACCESS GRANTED
+                   <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold text-[10px] uppercase tracking-widest border mb-4 ${activeTicket.event.isActive ? 'bg-primary/20 text-primary border-primary/30' : 'bg-on-surface/5 text-on-surface-variant border-outline-variant/20'}`}>
+                     <span className={`w-1.5 h-1.5 rounded-full ${activeTicket.event.isActive ? 'bg-primary animate-pulse' : 'bg-outline-variant/40'}`} />
+                     {activeTicket.event.isActive ? 'LIVE ACCESS GRANTED' : 'SCHEDULED DEPLOYMENT'}
                    </span>
                    <h2 className="font-headline text-3xl font-black tracking-tight">{activeTicket.event.title}</h2>
                    <p className="text-on-surface-variant flex items-center justify-center md:justify-start gap-2 font-medium mt-1">
@@ -96,10 +96,10 @@ export default function GuestDashboardPage() {
 
               <div className="w-full md:w-auto flex flex-col gap-3">
                  <button 
-                   onClick={() => router.push('/guest/sos')}
+                   onClick={() => router.push(activeTicket.event.isActive ? '/guest/sos' : '/guest/tickets')}
                    className="w-full md:w-48 py-4 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-[12px] shadow-[0_8px_24px_rgba(78,222,163,0.3)] hover:translate-y-[-2px] active:translate-y-[0] transition-all"
                  >
-                   Open Tactical OS
+                   {activeTicket.event.isActive ? 'Open Tactical OS' : 'Identify Pass'}
                  </button>
                  <button 
                     onClick={() => router.push('/guest/tickets')}
