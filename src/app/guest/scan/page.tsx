@@ -162,21 +162,25 @@ export default function QRScannerPage() {
           </div>
         )}
 
-        <div className="mt-14 w-full flex flex-col items-center gap-6">
-          <div className="flex items-center gap-4 px-6 py-2.5 rounded-full bg-surface-container-highest/20 border border-outline-variant/10 backdrop-blur-md">
-            <div className={`w-2.5 h-2.5 rounded-full ${scanning ? 'bg-green-500 animate-pulse' : 'bg-primary/20'}`}></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-on-surface-variant">
+        {/* Unified Action Box (Handshake + Marketplace) */}
+        <div className="mt-12 w-full max-w-sm bg-surface-container-low/60 backdrop-blur-3xl rounded-[2.5rem] border border-outline-variant/10 p-8 flex flex-col items-center gap-8 shadow-2xl relative overflow-hidden group">
+          {/* Subtle scanning glow inside box */}
+          <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-pulse"></div>
+          
+          <div className="flex items-center gap-4 px-5 py-2 rounded-full bg-white/5 border border-white/5">
+            <div className={`w-2 h-2 rounded-full ${scanning ? 'bg-green-500 animate-pulse' : 'bg-primary/20'}`}></div>
+            <span className="text-[9px] font-black uppercase tracking-[0.3em] text-on-surface-variant">
               {scanning ? 'Handshake Active' : 'Waiting for Handshake'}
             </span>
           </div>
           
-          <div className="flex flex-col items-center gap-4 w-full pt-4 border-t border-white/5 mt-4">
-            <p className="text-on-surface-variant/40 text-[9px] font-black uppercase tracking-[0.4em] mb-2 font-mono">No Tactical Pass Found?</p>
+          <div className="flex flex-col items-center gap-4 w-full">
+            <p className="text-on-surface-variant/40 text-[9px] font-black uppercase tracking-[0.4em] font-mono">No Tactical Pass Found?</p>
             <button 
               onClick={() => router.push('/guest/login')}
-              className="w-full max-w-[320px] bg-primary/10 hover:bg-primary/20 text-primary px-8 py-4 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-primary/20 shadow-2xl active:scale-95 group"
+              className="w-full bg-primary/10 hover:bg-primary/20 text-primary px-8 py-4 rounded-xl font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-center gap-3 border border-primary/20 hover:border-primary/40 active:scale-95 group/btn"
             >
-              <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">login</span>
+              <span className="material-symbols-outlined text-sm group-hover/btn:translate-x-0.5 transition-transform">login</span>
               Sign In to Marketplace
             </button>
           </div>
