@@ -80,7 +80,7 @@ export default function GuestLoginPage() {
 
       // 2. Sync Profile data from ticket
       const syncRef = await import('firebase/data-connect').then(m => m.mutationRef<any, UpsertUserProfileVariables>(dataconnect, 'UpsertUserProfile', {
-        id: uid,
+        uid: uid,
         name: ticket.guestName,
         age: ticket.guestAge,
         idCardNumber: ticket.guestIdNumber,
@@ -153,7 +153,7 @@ export default function GuestLoginPage() {
         
         // Save initial profile immediately
         const upsertRef = await import('firebase/data-connect').then(m => m.mutationRef(dataconnect, 'UpsertUserProfile', {
-          id: userCredential.user.uid,
+          uid: userCredential.user.uid,
           name: formData.name,
           age: parseInt(formData.age),
           idCardNumber: formData.idCardNumber,
