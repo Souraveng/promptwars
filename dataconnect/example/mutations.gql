@@ -84,14 +84,18 @@ mutation CreateVenueLayout($name: String!, $elements: String!) @auth(level: PUBL
   venueLayout_insert(data: {
     name: $name,
     elements: $elements
-  })
+  }) {
+    id
+  }
 }
 
 mutation UpdateVenueLayout($id: UUID!, $name: String, $elements: String) @auth(level: PUBLIC) {
   venueLayout_update(id: $id, data: {
     name: $name,
     elements: $elements
-  })
+  }) {
+    id
+  }
 }
 
 mutation DeleteVenueLayout($id: UUID!) @auth(level: PUBLIC) {

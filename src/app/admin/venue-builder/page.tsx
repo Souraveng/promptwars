@@ -279,6 +279,7 @@ export default function VenueBuilderPage() {
   const [layoutName, setLayoutName] = useState('New Stadium Layout');
   const [currentLayoutId, setCurrentLayoutId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
   
   const canvasWrapRef = useRef<HTMLDivElement>(null);
   const dragInitialElements = useRef<CanvasElement[]>([]);
@@ -353,12 +354,21 @@ export default function VenueBuilderPage() {
   };
 
   const handleFetchLayouts = async () => {
+    setIsFetching(true);
     try {
-      const { data } = await executeQuery<ListVenueLayoutsData, any>(queryRef(dataconnect, 'ListVenueLayouts'));
-      if (data?.venueLayouts) setSavedLayouts(data.venueLayouts);
+      const response = await executeQuery<ListVenueLayoutsData, any>(queryRef(dataconnect, 'ListVenueLayouts'));
+      console.log('[VenueBuilder] Fetch response:', response);
+      if (response.data?.venueLayouts) {
+        setSavedLayouts(response.data.venueLayouts);
+      } else {
+        setSavedLayouts([]);
+      }
       setLoadModalOpen(true);
     } catch (err) {
-      console.error('Error fetching layouts:', err);
+      console.error('[VenueBuilder] Error fetching layouts:', err);
+      alert("Failed to fetch layouts. Check connection or console.");
+    } finally {
+      setIsFetching(false);
     }
   };
 
@@ -523,8 +533,10 @@ export default function VenueBuilderPage() {
             <button onClick={redo} title="Redo (Ctrl+Y)"
               className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-white/5 text-lg">redo</button>
             <div className="h-5 w-px bg-white/10 mx-2" />
-            <button onClick={handleFetchLayouts} title="Load Project"
-              className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-white/5 text-lg">folder_open</button>
+            <button onClick={handleFetchLayouts} disabled={isFetching} title="Load Project"
+              className={`material-symbols-outlined transition-colors p-1.5 rounded-lg hover:bg-white/5 text-lg ${isFetching ? 'text-primary animate-spin' : 'text-on-surface-variant hover:text-primary'}`}>
+              {isFetching ? 'sync' : 'folder_open'}
+            </button>
             <button onClick={toggleFullscreen} title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
               className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-1.5 rounded-lg hover:bg-white/5 text-lg">
               {isFullscreen ? 'fullscreen_exit' : 'fullscreen'}
