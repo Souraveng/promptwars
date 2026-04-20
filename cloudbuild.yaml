@@ -25,4 +25,5 @@ steps:
 images:
   - 'us-central1-docker.pkg.dev/$PROJECT_ID/tactical-os/app:latest'
 
-# Options block removed to resolve logging interpretation error
+options:
+  logging: CLOUD_LOGGING_ONLY
