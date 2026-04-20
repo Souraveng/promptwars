@@ -1,7 +1,7 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getDataConnect, connectDataConnectEmulator } from "firebase/data-connect";
-import { getStorage, connectStorageEmulator } from "firebase/storage";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getDataConnect, connectDataConnectEmulator, DataConnect } from "firebase/data-connect";
+import { getStorage, connectStorageEmulator, FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,20 +16,16 @@ export const GOOGLE_MAPS_API_KEY = (process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY 
 export const MAP_LIBRARIES: ("places" | "marker" | "visualization")[] = ["places", "marker", "visualization"];
 export const DEFAULT_MAP_ID = '8e0a97af9386f9';
 
-// Guard initialization to avoid crashing during build/prerendering if env vars are missing
-const isConfigValid = !!firebaseConfig.apiKey && firebaseConfig.apiKey.length > 0;
+// Initialize Firebase securely (prevent overlapping multiple instances in Next.js Dev Mode)
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-const app = isConfigValid 
-  ? (!getApps().length ? initializeApp(firebaseConfig) : getApp())
-  : null as any;
-
-export const auth = isConfigValid ? getAuth(app) : ({} as any);
-export const storage = isConfigValid ? getStorage(app) : ({} as any);
-export const dataconnect = isConfigValid ? getDataConnect(app, {
+export const auth = getAuth(app);
+export const storage = getStorage(app);
+export const dataconnect = getDataConnect(app, {
   service: "promptwar",
   location: "us-central1",
   connector: "example"
-}) : ({} as any);
+});
 
 // Connect to emulator in development
 if (process.env.NODE_ENV !== 'production') {
