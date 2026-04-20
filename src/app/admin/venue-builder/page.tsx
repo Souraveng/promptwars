@@ -118,7 +118,7 @@ function LoadLayoutModal({ layouts, onSelect, onClose }: {
                     Created {new Date(layout.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <button onClick={() => { onSelect(layout); onClose(); }} className="px-5 py-2 bg-primary text-on-primary rounded-xl text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all hover:brightness-110">Open Project</button>
+                <button onClick={() => { onSelect(layout); onClose(); }} className="px-5 py-2 bg-primary text-on-primary rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all hover:brightness-110">Open Project</button>
               </div>
             ))
           )}
@@ -277,6 +277,8 @@ export default function VenueBuilderPage() {
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [layoutName, setLayoutName] = useState('New Stadium Layout');
+  const [currentLayoutId, setCurrentLayoutId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   
   const canvasWrapRef = useRef<HTMLDivElement>(null);
   const dragInitialElements = useRef<CanvasElement[]>([]);
@@ -366,9 +368,48 @@ export default function VenueBuilderPage() {
       recordAction();
       setElements(parsedElements);
       setLayoutName(layout.name);
+      setCurrentLayoutId(layout.id);
       setSelectedIds([]);
     } catch (err) {
       console.error('Error parsing layout elements:', err);
+    }
+  };
+
+  const handleSave = async () => {
+    if (elements.length === 0) {
+      alert("Canvas is empty. Add some elements before saving.");
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      const elementsJson = JSON.stringify(elements);
+      
+      if (currentLayoutId) {
+        // Update existing
+        await executeMutation(mutationRef(dataconnect, 'UpdateVenueLayout', {
+          id: currentLayoutId,
+          name: layoutName,
+          elements: elementsJson
+        }));
+        alert("Layout updated successfully!");
+      } else {
+        // Create new
+        const { data } = await executeMutation<any, any>(mutationRef(dataconnect, 'CreateVenueLayout', {
+          name: layoutName,
+          elements: elementsJson
+        }));
+        
+        if (data?.venueLayout_insert?.id) {
+          setCurrentLayoutId(data.venueLayout_insert.id);
+        }
+        alert("New layout saved successfully!");
+      }
+    } catch (err) {
+      console.error('Error saving layout:', err);
+      alert("Failed to save layout. Check console for details.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -522,9 +563,19 @@ export default function VenueBuilderPage() {
             </button>
           </div>
 
-          {/* Right: save */}
-          <button className="bg-primary text-on-primary px-5 py-2 rounded-xl font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg shrink-0">
-            Save Changes
+          <button 
+            onClick={handleSave}
+            disabled={isSaving}
+            className="bg-primary text-on-primary px-5 py-2 rounded-xl font-bold text-sm hover:brightness-110 active:scale-95 transition-all shadow-lg shrink-0 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {isSaving ? (
+              <>
+                <span className="material-symbols-outlined animate-spin text-sm">sync</span>
+                Saving...
+              </>
+            ) : (
+              'Save Changes'
+            )}
           </button>
         </div>
 
