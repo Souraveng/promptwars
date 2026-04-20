@@ -45,9 +45,11 @@ export function GuestProvider({ children }: { children: React.ReactNode }) {
       const guestTickets = tResult.data?.tickets || [];
       setTickets(guestTickets);
 
-      if (guestTickets.length > 0) {
-        const live = guestTickets.find(t => t.event.isActive) || guestTickets[0];
-        setActiveTicket(live);
+      // Restore active ticket from session storage if possible
+      const savedTicketId = sessionStorage.getItem('active_deployment_id');
+      if (savedTicketId) {
+        const found = guestTickets.find(t => t.id === savedTicketId);
+        if (found) setActiveTicket(found);
       }
     } catch (err) {
       console.error('GuestContext: Ticket Sync Error:', err);
@@ -65,11 +67,21 @@ export function GuestProvider({ children }: { children: React.ReactNode }) {
         setProfile(null);
         setTickets([]);
         setActiveTicket(null);
+        sessionStorage.removeItem('active_deployment_id');
         setLoading(false);
       }
     });
     return () => unsubscribe();
   }, []);
+
+  const handleSetActiveTicket = (ticket: any) => {
+    setActiveTicket(ticket);
+    if (ticket) {
+      sessionStorage.setItem('active_deployment_id', ticket.id);
+    } else {
+      sessionStorage.removeItem('active_deployment_id');
+    }
+  };
 
   const refreshTickets = async () => {
     if (user) await fetchProfileAndTickets(user.uid);
@@ -84,7 +96,7 @@ export function GuestProvider({ children }: { children: React.ReactNode }) {
       loading,
       refreshTickets,
       refreshProfile: refreshTickets,
-      setActiveTicket
+      setActiveTicket: handleSetActiveTicket
     }}>
       {children}
     </GuestContext.Provider>

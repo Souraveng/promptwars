@@ -19,6 +19,7 @@ export default function DesktopSideNav() {
   const pathname = usePathname();
   const router = useRouter();
   const { activeTicket } = useGuest();
+  const now = new Date();
 
   const handleSignOut = async () => {
     await signOut(auth);
@@ -37,7 +38,11 @@ export default function DesktopSideNav() {
       <div className="flex-1 flex flex-col gap-1 px-2 py-4 overflow-hidden">
         {links.map(({ href, icon, label, guarded }) => {
           const active = pathname.startsWith(href);
-          const isLocked = guarded && !activeTicket;
+          
+          // Strict Locking Logic
+          const isExpired = activeTicket?.event?.expiryDate && new Date(activeTicket.event.expiryDate) < now;
+          const isEventActive = activeTicket?.event?.isActive;
+          const isLocked = guarded && (!activeTicket || !isEventActive || isExpired);
 
           const content = (
             <div className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group border
@@ -54,7 +59,7 @@ export default function DesktopSideNav() {
               </span>
               <span className="hidden lg:block font-label text-xs uppercase tracking-wider font-medium">
                 {label}
-                {isLocked && <span className="ml-2 py-0.5 px-1 bg-surface-container rounded text-[8px] font-black opacity-60">Locked</span>}
+                {isLocked && <span className="ml-2 py-0.5 px-1 bg-surface-container rounded text-[8px] font-black opacity-60">{isExpired ? 'Expired' : 'Locked'}</span>}
               </span>
             </div>
           );

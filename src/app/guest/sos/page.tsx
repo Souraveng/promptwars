@@ -21,8 +21,13 @@ export default function GuestSOSPage() {
 
   // Authorization Guard
   useEffect(() => {
-    if (!activeTicket) {
-      router.replace('/guest/dashboard');
+    const now = new Date();
+    const isExpired = activeTicket?.event?.expiryDate && new Date(activeTicket.event.expiryDate) < now;
+    const isEventActive = activeTicket?.event?.isActive;
+    const isValid = activeTicket && isEventActive && !isExpired;
+
+    if (!isValid) {
+      router.replace('/guest/dashboard?locked=true');
     }
   }, [activeTicket, router]);
 

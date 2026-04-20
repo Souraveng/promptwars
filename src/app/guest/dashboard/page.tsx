@@ -94,22 +94,34 @@ export default function GuestDashboardPage() {
                 </div>
               </div>
 
-              <div className="w-full md:w-auto flex flex-col gap-3">
-                 <button 
-                   onClick={() => router.push(activeTicket.event.isActive ? '/guest/sos' : '/guest/tickets')}
-                   className="w-full md:w-48 py-4 bg-primary text-on-primary rounded-2xl font-black uppercase tracking-widest text-[12px] shadow-[0_8px_24px_rgba(78,222,163,0.3)] hover:translate-y-[-2px] active:translate-y-[0] transition-all"
-                 >
-                   {activeTicket.event.isActive ? 'Open Tactical OS' : 'Identify Pass'}
-                 </button>
-                 <button 
-                    onClick={() => router.push('/guest/tickets')}
-                    className="w-full md:w-48 py-4 bg-surface-container-highest/20 hover:bg-surface-container-highest/40 rounded-2xl font-bold uppercase tracking-widest text-[10px] border border-outline-variant/10 transition-all"
-                 >
-                   View Security ID
-                 </button>
-              </div>
-           </div>
-        </section>
+               <div className="w-full md:w-auto flex flex-col gap-3">
+                  {(() => {
+                    const isExpired = activeTicket?.event?.expiryDate && new Date(activeTicket.event.expiryDate) < new Date();
+                    const isEventActive = activeTicket?.event?.isActive;
+                    const isValid = activeTicket && isEventActive && !isExpired;
+
+                    return (
+                      <button 
+                        onClick={() => isValid ? router.push('/guest/sos') : router.push('/guest/tickets')}
+                        className={`w-full md:w-48 py-4 rounded-2xl font-black uppercase tracking-widest text-[12px] transition-all shadow-xl hover:translate-y-[-2px] active:translate-y-[0] 
+                          ${isValid 
+                            ? 'bg-primary text-on-primary shadow-[0_8px_24px_rgba(var(--color-primary-rgb),0.3)]' 
+                            : 'bg-surface-container-highest/20 text-on-surface-variant/40 border border-outline-variant/10 cursor-not-allowed'}`}
+                      >
+                        {isValid ? 'Open Tactical OS' : 'Identify Pass'}
+                      </button>
+                    );
+                  })()}
+                  
+                  <button 
+                     onClick={() => router.push('/guest/tickets')}
+                     className="w-full md:w-48 py-4 bg-surface-container-highest/10 hover:bg-surface-container-highest/20 rounded-2xl font-bold uppercase tracking-widest text-[10px] border border-outline-variant/10 transition-all"
+                  >
+                    Manage Deployment
+                  </button>
+               </div>
+            </div>
+         </section>
       ) : (
         /* Empty State for Tickets */
         <section className="bg-surface-container-low rounded-[2rem] p-12 border border-dashed border-outline-variant/20 flex flex-col items-center text-center">

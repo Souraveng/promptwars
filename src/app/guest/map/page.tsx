@@ -1,6 +1,23 @@
-import React from 'react';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useGuest } from '../GuestContext';
 
 export default function GuestMapPage() {
+  const router = useRouter();
+  const { activeTicket } = useGuest();
+
+  // Authorization Guard
+  useEffect(() => {
+    const now = new Date();
+    const isExpired = activeTicket?.event?.expiryDate && new Date(activeTicket.event.expiryDate) < now;
+    const isEventActive = activeTicket?.event?.isActive;
+    const isValid = activeTicket && isEventActive && !isExpired;
+
+    if (!isValid) {
+      router.replace('/guest/dashboard?locked=true');
+    }
+  }, [activeTicket, router]);
+
   return (
     <main className="relative h-[calc(100vh-8rem)] w-full overflow-hidden bg-background">
       {/* Interactive Vector Map Base */}
